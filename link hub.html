@@ -28,12 +28,6 @@
       a:hover { color: var(--accent); }
       a:focus-visible { outline: 3px solid #2783de; outline-offset: 3px; border-radius: 3px; }
       .arrow { width: 16px; height: 16px; flex: 0 0 auto; color: var(--muted); }
-      #preview-dialog { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; overflow: hidden; border: 0; background: var(--bg); }
-      #preview-dialog::backdrop { background: var(--bg); }
-      #preview { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; background: white; }
-      #preview-close { position: absolute; z-index: 2; top: 16px; right: 16px; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(0, 0, 0, .18); border-radius: 12px; background: rgba(255, 255, 255, .96); color: #222; cursor: pointer; }
-      #preview-close svg { width: 20px; height: 20px; }
-      #preview-close:focus-visible { outline: 3px solid #2783de; outline-offset: 3px; }
       @media (max-width: 520px) { body { padding: 48px 20px; } }
       @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
     </style>
@@ -42,42 +36,24 @@
     <main>
       <h1>Link hub</h1>
       <ul>
-        <!-- Add, remove, or rename links here. data-open can be: tab, blank, or iframe. -->
-        <li><a href="https://github.com" data-open="tab" target="_blank" rel="noopener noreferrer">GitHub <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
-        <li><a href="https://developer.mozilla.org" data-open="tab" target="_blank" rel="noopener noreferrer">MDN Web Docs <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <!-- Replace these links and names. Each link opens in a new tab from about:blank. -->
+        <li><a href="https://github.com" data-open="blank" target="_blank" rel="noopener noreferrer">GitHub <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <li><a href="https://developer.mozilla.org" data-open="blank" target="_blank" rel="noopener noreferrer">MDN Web Docs <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
         <li><a href="https://www.figma.com" data-open="blank" target="_blank" rel="noopener noreferrer">Figma <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
-        <li><a href="https://example.com" data-open="iframe" target="_blank" rel="noopener noreferrer">Example site <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <li><a href="https://example.com" data-open="blank" target="_blank" rel="noopener noreferrer">Example site <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
       </ul>
-      <dialog id="preview-dialog" aria-label="Link preview">
-        <button id="preview-close" type="button" aria-label="Close preview" autofocus><svg class="lucide lucide-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
-        <iframe id="preview" title="Link preview" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>
-      </dialog>
     </main>
     <script>
-      const preview = document.querySelector("#preview");
-      const previewDialog = document.querySelector("#preview-dialog");
-      function closePreview() {
-        preview.src = "about:blank";
-        previewDialog.close();
-      }
-      document.querySelector("#preview-close").addEventListener("click", closePreview);
-      previewDialog.addEventListener("close", () => { preview.src = "about:blank"; });
       document.addEventListener("click", (event) => {
-        const link = event.target.closest("a[data-open]");
+        const link = event.target.closest('a[data-open="blank"]');
         if (!link) return;
-        if (link.dataset.open === "blank") {
-          event.preventDefault();
-          const tab = window.open("about:blank", "_blank");
-          if (tab) {
-            tab.opener = null;
-            tab.location.replace(link.href);
-          } else {
-            window.open(link.href, "_blank", "noopener,noreferrer");
-          }
-        } else if (link.dataset.open === "iframe") {
-          event.preventDefault();
-          preview.src = link.href;
-          previewDialog.showModal();
+        event.preventDefault();
+        const tab = window.open("about:blank", "_blank");
+        if (tab) {
+          tab.opener = null;
+          tab.location.replace(link.href);
+        } else {
+          window.open(link.href, "_blank", "noopener,noreferrer");
         }
       });
     </script>
