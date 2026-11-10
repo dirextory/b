@@ -1,0 +1,5095 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#151617" />
+    <meta
+      name="description"
+      content="A little space for your next big idea. cobalt+ is a customizable, single-file code editor."
+    />
+    <title>cobalt+ — a little space to build</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='12' fill='%23191a1d'/%3E%3Ctext x='8' y='29' fill='white' font-family='Arial' font-weight='bold' font-size='29'%3Ec%3C/text%3E%3Ctext x='24' y='17' fill='%23c8c1f3' font-family='Arial' font-size='17'%3E+%3C/text%3E%3C/svg%3E"
+    />
+    <style>
+      @import url("https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.2.6/index.css");
+      @import url("https://cdn.jsdelivr.net/npm/@fontsource-variable/jetbrains-mono@5.2.6/index.css");
+      :root {
+        color-scheme: dark;
+        --bg: #151617;
+        --panel: #1b1c1e;
+        --editor: #1b1c1e;
+        --raised: #242527;
+        --hover: #2c2d30;
+        --line: #303133;
+        --text: #e7e7e9;
+        --muted: #8b8c92;
+        --accent: #cec7f1;
+        --accent-rgb: 206, 199, 241;
+        --green: #a3c9a0;
+        --font-size: 13px;
+        --line-height: 25px;
+        --sidebar-width: 218px;
+        --editor-width: 55%;
+        --terminal-height: 168px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Inter Variable", Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-size: 12px;
+        background: var(--bg);
+        color: var(--text);
+        overflow: hidden;
+      }
+      button,
+      input,
+      select,
+      textarea {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+        color: inherit;
+        border: 0;
+        background: none;
+      }
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.45;
+      }
+      button,
+      a,
+      input,
+      select,
+      textarea {
+        outline-offset: 3px;
+      }
+      button:focus-visible,
+      a:focus-visible {
+        outline: 2px solid var(--accent);
+      }
+      input,
+      select,
+      textarea {
+        outline-color: var(--accent);
+      }
+      button {
+        transition:
+          background 0.16s,
+          color 0.16s,
+          transform 0.16s;
+      }
+      button:active:not(:disabled) {
+        transform: translateY(1px);
+      }
+      button:hover {
+        color: #fff;
+      }
+      input,
+      select {
+        background: var(--bg);
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-radius: 6px;
+        padding: 10px 12px;
+      }
+      input[type="checkbox"],
+      input[type="range"] {
+        accent-color: var(--accent);
+      }
+      a {
+        color: var(--accent);
+      }
+      .icon {
+        width: 17px;
+        height: 17px;
+        display: inline-block;
+        vertical-align: middle;
+        filter: invert(79%);
+        pointer-events: none;
+        flex-shrink: 0;
+      }
+      .icon.sm {
+        width: 14px;
+        height: 14px;
+      }
+      .icon.lg {
+        width: 22px;
+        height: 22px;
+      }
+      .file-icon {
+        width: 16px;
+        height: 16px;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+      .icon-btn {
+        width: 29px;
+        height: 29px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 5px;
+        color: var(--muted);
+        flex-shrink: 0;
+      }
+      .icon-btn:hover {
+        background: var(--hover);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      .mono {
+        font-family: "JetBrains Mono Variable", monospace;
+      }
+      .spacer {
+        flex: 1;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .hidden {
+        display: none !important;
+      }
+      .pill {
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        color: var(--muted);
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        padding: 3px 5px;
+      }
+      .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        display: inline-block;
+        box-shadow: 0 0 9px #a3c9a030;
+      }
+      .btn {
+        display: inline-flex;
+        gap: 7px;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid var(--line);
+        background: var(--raised);
+        border-radius: 6px;
+        padding: 8px 12px;
+        white-space: nowrap;
+        font-size: 11px;
+      }
+      .btn:hover {
+        background: var(--hover);
+      }
+      .btn.primary {
+        color: #202024;
+        background: var(--accent);
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      .btn.primary:hover {
+        filter: brightness(1.08);
+      }
+      .btn.primary .icon {
+        filter: brightness(0.2);
+      }
+      .text-btn {
+        color: var(--muted);
+        padding: 6px 9px;
+        border-radius: 5px;
+      }
+      .text-btn:hover {
+        background: var(--raised);
+      }
+      kbd {
+        font:
+          10px "Inter Variable",
+          sans-serif;
+        color: #777981;
+        border: 1px solid #ffffff14;
+        border-radius: 4px;
+        padding: 2px 4px;
+        background: #ffffff03;
+      }
+      .app {
+        height: 100dvh;
+        min-height: 430px;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        z-index: 1;
+      }
+      .titlebar {
+        height: 57px;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+        border-bottom: 1px solid var(--line);
+        padding: 0 21px 0 19px;
+        gap: 31px;
+        background: #171819dd;
+        backdrop-filter: blur(20px);
+      }
+      .brand {
+        font-size: 24px;
+        letter-spacing: -1.3px;
+        font-weight: 710;
+        display: inline-flex;
+        align-items: baseline;
+      }
+      .brand b {
+        font-weight: 500;
+        color: var(--accent);
+        font-size: 26px;
+        margin-left: 1px;
+      }
+      .menus {
+        display: flex;
+        gap: 5px;
+      }
+      .menu-trigger {
+        padding: 7px 9px;
+        color: #b1b1b7;
+        font-size: 11px;
+        border-radius: 5px;
+      }
+      .menu-trigger:hover,
+      .menu-trigger.open {
+        background: var(--raised);
+        color: var(--text);
+      }
+      .workspace-title {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        gap: 8px;
+        color: #96979c;
+        font-size: 10px;
+        letter-spacing: 0.2px;
+      }
+      .workspace-title .icon {
+        opacity: 0.6;
+      }
+      .top-right {
+        margin-left: auto;
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .local-badge {
+        font-size: 10px;
+        color: var(--muted);
+        gap: 6px;
+        display: flex;
+        align-items: center;
+      }
+      .avatar {
+        background: #343237;
+        border: 1px solid #49444f;
+        width: 25px;
+        height: 25px;
+        border-radius: 50%;
+        font-size: 10px;
+        color: #d6c8e8;
+      }
+      .workbar {
+        display: flex;
+        align-items: center;
+        height: 60px;
+        flex-shrink: 0;
+        padding: 0 20px 0 80px;
+        gap: 14px;
+      }
+      .project-name {
+        font-size: 12px;
+        font-weight: 560;
+        gap: 9px;
+        display: flex;
+        align-items: center;
+      }
+      .project-name .icon {
+        opacity: 0.8;
+      }
+      .project-tag {
+        font-size: 9px;
+        color: #92929a;
+        padding: 3px 6px;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        margin-left: 3px;
+      }
+      .search-trigger {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #777a81;
+        font-size: 10px;
+        background: #1d1e20;
+        border: 1px solid #2c2d2f;
+        border-radius: 6px;
+        width: 202px;
+        padding: 0 9px;
+        text-align: left;
+      }
+      .search-trigger kbd {
+        margin-left: auto;
+        font-size: 9px;
+      }
+      .workbar .separator {
+        height: 20px;
+        width: 1px;
+        background: var(--line);
+        margin: 0 2px;
+      }
+      .workbar .btn {
+        height: 31px;
+        font-size: 10px;
+        padding: 0 12px;
+      }
+      .run-btn {
+        min-width: 76px;
+      }
+      .workbar .reset-btn {
+        font-size: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        padding: 7px 2px;
+      }
+      .workarea {
+        display: flex;
+        flex: 1;
+        min-height: 0;
+        padding: 0 14px 12px 0;
+        position: relative;
+        gap: 0;
+      }
+      .activity {
+        width: 60px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 9px 0 0;
+        gap: 9px;
+      }
+      .activity-btn {
+        position: relative;
+        width: 39px;
+        height: 39px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9px;
+      }
+      .activity-btn .icon {
+        opacity: 0.6;
+        width: 20px;
+        height: 20px;
+      }
+      .activity-btn:hover {
+        background: var(--raised);
+      }
+      .activity-btn.active {
+        background: #303033;
+      }
+      .activity-btn.active .icon {
+        opacity: 1;
+        filter: invert(88%);
+      }
+      .activity-btn.active:before {
+        content: "";
+        position: absolute;
+        left: -10px;
+        width: 2px;
+        height: 18px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .activity-btn[data-tip]:hover:after {
+        content: attr(data-tip);
+        position: absolute;
+        left: 48px;
+        background: #333438;
+        box-shadow: 0 5px 20px #0005;
+        padding: 7px 10px;
+        color: #eee;
+        font-size: 11px;
+        border-radius: 5px;
+        white-space: nowrap;
+        z-index: 50;
+      }
+      .activity-bottom {
+        margin-top: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+      }
+      .sidebar {
+        width: var(--sidebar-width);
+        min-width: 155px;
+        max-width: 400px;
+        display: flex;
+        flex-direction: column;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        background: linear-gradient(150deg, #202123ee, #1c1d1fee);
+        backdrop-filter: blur(20px);
+        overflow: hidden;
+        position: relative;
+      }
+      .panel-heading {
+        display: flex;
+        align-items: center;
+        padding: 12px 12px 11px 15px;
+        min-height: 47px;
+        gap: 3px;
+      }
+      .eyebrow {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1.3px;
+        color: #999aa2;
+        text-transform: uppercase;
+      }
+      .panel-heading .icon-btn {
+        width: 23px;
+        height: 23px;
+      }
+      .explorer-content {
+        flex: 1;
+        overflow: auto;
+      }
+      .folder-row {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 10px 14px;
+        font-size: 10px;
+        color: #bdc0c7;
+        font-weight: 550;
+        letter-spacing: 0.3px;
+      }
+      .folder-row .icon {
+        width: 13px;
+        height: 13px;
+      }
+      .file-row {
+        height: 33px;
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        padding: 0 15px 0 31px;
+        cursor: pointer;
+        color: #a4a5ad;
+        font-size: 11px;
+        position: relative;
+        white-space: nowrap;
+      }
+      .file-row:hover {
+        background: #ffffff05;
+      }
+      .file-row.selected {
+        background: #ffffff08;
+        color: #e2e2e8;
+      }
+      .file-row.selected:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 7px;
+        bottom: 7px;
+        width: 2px;
+        background: var(--accent);
+      }
+      .file-row .file-dot {
+        width: 5px;
+        height: 5px;
+        background: #c9c2ec;
+        border-radius: 50%;
+        margin-left: auto;
+        opacity: 0.8;
+      }
+      .subfolder {
+        padding-left: 29px;
+        color: #96979f;
+        font-size: 11px;
+        font-weight: 400;
+      }
+      .explorer-footer {
+        padding: 12px;
+        border-top: 1px solid var(--line);
+        color: #8b8c94;
+      }
+      .explorer-footer .row {
+        font-size: 9px;
+        gap: 5px;
+      }
+      .starter-card {
+        background: linear-gradient(120deg, #ffffff07, #ffffff01);
+        border: 1px solid #ffffff0b;
+        border-radius: 7px;
+        margin: 12px;
+        padding: 14px 12px;
+        position: relative;
+        overflow: hidden;
+      }
+      .starter-card .icon {
+        width: 20px;
+        height: 20px;
+        filter: invert(83%) sepia(15%) saturate(500%) hue-rotate(204deg);
+      }
+      .starter-card h3 {
+        font-weight: 500;
+        font-size: 11px;
+        margin: 11px 0 7px;
+      }
+      .starter-card p {
+        font-size: 10px;
+        line-height: 1.7;
+        color: #8d8e97;
+        margin: 0 0 13px;
+      }
+      .starter-card button {
+        font-size: 10px;
+        color: #c9c3e4;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .starter-card button .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .sidebar-bottom {
+        margin-top: auto;
+      }
+      .resize-x {
+        width: 10px;
+        flex-shrink: 0;
+        cursor: col-resize;
+        position: relative;
+      }
+      .resize-x:after {
+        content: "";
+        position: absolute;
+        width: 2px;
+        height: 28px;
+        left: 4px;
+        top: 48%;
+        background: #424347;
+        border-radius: 4px;
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+      .resize-x:hover:after {
+        opacity: 1;
+      }
+      .main-panels {
+        display: flex;
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+      }
+      .code-panel {
+        width: var(--editor-width);
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        min-width: 220px;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+        background: var(--editor);
+        box-shadow: 0 8px 35px #0000000a;
+      }
+      .editor-tabs {
+        height: 43px;
+        display: flex;
+        align-items: stretch;
+        background: #1e1f21;
+        border-bottom: 1px solid var(--line);
+        flex-shrink: 0;
+        padding-right: 6px;
+        overflow: auto;
+        scrollbar-width: none;
+      }
+      .file-tab {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        min-width: 112px;
+        padding: 0 13px;
+        font-size: 10px;
+        color: #888991;
+        border-right: 1px solid #ffffff05;
+        position: relative;
+        white-space: nowrap;
+      }
+      .file-tab.active {
+        background: var(--editor);
+        color: #dbdbe1;
+      }
+      .file-tab.active:before {
+        content: "";
+        height: 2px;
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        background: var(--accent);
+      }
+      .file-tab .close-tab {
+        margin-left: 7px;
+        font-size: 14px;
+        color: #74757d;
+        display: inline-flex;
+        width: 15px;
+        justify-content: center;
+      }
+      .file-tab .close-tab:hover {
+        background: var(--hover);
+        color: white;
+        border-radius: 3px;
+      }
+      .tab-actions {
+        display: flex;
+        align-items: center;
+        padding-left: 5px;
+        margin-left: auto;
+      }
+      .breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 0 17px;
+        height: 36px;
+        flex-shrink: 0;
+        font-size: 10px;
+        color: #7f818b;
+        border-bottom: 1px solid #ffffff03;
+      }
+      .breadcrumbs .icon {
+        width: 11px;
+        height: 11px;
+      }
+      .breadcrumbs .file-icon {
+        width: 12px;
+        height: 12px;
+      }
+      .breadcrumbs span:last-child {
+        color: #a5a6af;
+      }
+      .editor-body {
+        flex: 1;
+        position: relative;
+        min-height: 80px;
+        overflow: hidden;
+      }
+      .code-scroll {
+        height: 100%;
+        overflow: auto;
+        position: relative;
+        scrollbar-color: #44454a transparent;
+        scrollbar-width: thin;
+      }
+      .code-inner {
+        position: relative;
+        min-height: 100%;
+        min-width: 100%;
+        width: max-content;
+        font-family: "JetBrains Mono Variable", monospace;
+        font-size: var(--font-size);
+      }
+      .line-numbers {
+        position: absolute;
+        left: 0;
+        top: 0;
+        padding: 13px 0;
+        width: 48px;
+        text-align: right;
+        font:
+          var(--font-size)/var(--line-height) "JetBrains Mono Variable",
+          monospace;
+        color: #555860;
+        user-select: none;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .line-numbers div {
+        padding-right: 15px;
+      }
+      .line-numbers .current {
+        color: #d9dae0;
+      }
+      .code-highlight,
+      .code-input {
+        font:
+          var(--font-size)/var(--line-height) "JetBrains Mono Variable",
+          monospace !important;
+        letter-spacing: 0 !important;
+        tab-size: 2;
+        margin: 0 !important;
+        border: 0 !important;
+        white-space: pre !important;
+        word-wrap: normal !important;
+        overflow-wrap: normal !important;
+        padding: 13px 28px 100px 59px !important;
+        border-radius: 0 !important;
+        min-height: 100%;
+        min-width: 100%;
+        background: transparent !important;
+      }
+      .code-highlight {
+        pointer-events: none;
+        color: #cfd1dc;
+        position: relative;
+        z-index: 1;
+        width: max-content;
+      }
+      .code-input {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        resize: none;
+        overflow: hidden;
+        color: transparent;
+        caret-color: #ddd;
+        outline: none;
+        z-index: 2;
+        -webkit-text-fill-color: transparent;
+      }
+      .code-input::selection {
+        background: #b4a7f633;
+      }
+      .token.comment,
+      .token.prolog,
+      .token.doctype {
+        color: #686d7b;
+      }
+      .token.punctuation {
+        color: #939bb2;
+      }
+      .token.tag {
+        color: #f18caa;
+      }
+      .token.attr-name {
+        color: #d5b2fa;
+      }
+      .token.attr-value,
+      .token.string {
+        color: #b4d496;
+      }
+      .token.keyword,
+      .token.selector {
+        color: #c6a5f3;
+      }
+      .token.function {
+        color: #a5c9f4;
+      }
+      .token.number,
+      .token.boolean {
+        color: #e6b583;
+      }
+      .token.operator {
+        color: #96cdd1;
+      }
+      .token.property {
+        color: #a9c9ee;
+      }
+      .token.class-name {
+        color: #e5c288;
+      }
+      .editor-mini-status {
+        height: 26px;
+        border-top: 1px solid #ffffff05;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        color: #70737e;
+        font-size: 9px;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .editor-mini-status .icon {
+        width: 12px;
+        height: 12px;
+        opacity: 0.65;
+      }
+      .editor-mini-status button {
+        color: #898c96;
+        font-size: 9px;
+      }
+      .terminal {
+        height: var(--terminal-height);
+        min-height: 95px;
+        max-height: 60%;
+        flex-shrink: 0;
+        border-top: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        background: #191a1c;
+      }
+      .terminal-resize {
+        height: 5px;
+        position: absolute;
+        top: -3px;
+        left: 0;
+        right: 0;
+        cursor: row-resize;
+        z-index: 4;
+      }
+      .terminal-heading {
+        height: 40px;
+        flex-shrink: 0;
+        padding: 0 13px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .terminal-label {
+        font-size: 9px;
+        letter-spacing: 0.7px;
+        color: #c6c7ce;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .terminal-label:after {
+        content: "";
+        width: 4px;
+        height: 4px;
+        background: var(--green);
+        border-radius: 50%;
+      }
+      .terminal-heading .pill {
+        font-size: 7px;
+        padding: 2px 4px;
+        color: #a69cc8;
+        background: #a69cc80b;
+        border-color: #a69cc822;
+      }
+      .terminal-heading .icon-btn {
+        height: 23px;
+        width: 23px;
+      }
+      .console-lines {
+        padding: 1px 16px;
+        overflow: auto;
+        font:
+          10px/24px "JetBrains Mono Variable",
+          monospace;
+        color: #8a8d98;
+        flex: 1;
+      }
+      .console-line {
+        display: flex;
+        gap: 12px;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+      }
+      .console-line time {
+        color: #555a64;
+        font-size: 9px;
+        flex-shrink: 0;
+      }
+      .console-line .console-tag {
+        color: #a8c99b;
+      }
+      .console-line.error {
+        color: #e8a1a9;
+      }
+      .console-line.warn {
+        color: #ddc48f;
+      }
+      .console-input {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        border-top: 1px solid #ffffff04;
+        padding: 2px 16px;
+        color: #9ba6bc;
+      }
+      .console-input input {
+        background: none;
+        border: 0;
+        padding: 5px 0;
+        font:
+          10px "JetBrains Mono Variable",
+          monospace;
+        width: 100%;
+        outline: none;
+      }
+      .console-input span {
+        font-size: 11px;
+      }
+      .preview-panel {
+        min-width: 200px;
+        flex: 1;
+        border: 1px solid var(--line);
+        border-radius: 9px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        background: var(--panel);
+        box-shadow: 0 8px 35px #0000000a;
+      }
+      .preview-heading {
+        height: 43px;
+        flex-shrink: 0;
+        padding: 0 12px 0 15px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid var(--line);
+        background: #1e1f21;
+      }
+      .preview-heading > span {
+        font-size: 10px;
+        font-weight: 500;
+        color: #c5c6cd;
+      }
+      .preview-heading .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .live-badge {
+        margin-left: 2px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        color: #a4bc9d;
+        font-size: 8px !important;
+        background: #a3c9a009;
+        border: 1px solid #a3c9a01a;
+        border-radius: 4px;
+        padding: 2px 5px;
+      }
+      .live-badge .dot {
+        width: 4px;
+        height: 4px;
+      }
+      .preview-heading .icon-btn {
+        width: 25px;
+        height: 26px;
+      }
+      .preview-address {
+        height: 37px;
+        flex-shrink: 0;
+        padding: 0 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border-bottom: 1px solid #ffffff06;
+        color: #777c87;
+        font-size: 9px;
+      }
+      .address {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        flex: 1;
+        background: #151618;
+        padding: 5px 9px;
+        border-radius: 4px;
+      }
+      .address .icon {
+        height: 10px;
+        width: 10px;
+        opacity: 0.6;
+      }
+      .preview-address .icon-btn {
+        width: 20px;
+        height: 23px;
+      }
+      .device-switcher {
+        display: flex;
+        gap: 2px;
+      }
+      .device-switcher button {
+        border-radius: 3px;
+        padding: 3px 5px;
+        display: flex;
+        align-items: center;
+      }
+      .device-switcher button.active {
+        background: #ffffff09;
+      }
+      .device-switcher .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .preview-stage {
+        flex: 1;
+        min-height: 0;
+        background: repeating-conic-gradient(#e6e5e1 0% 25%, #eeede9 0% 50%) 50%/16px 16px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        overflow: auto;
+      }
+      .preview-stage iframe {
+        display: block;
+        background: #f7f6f2;
+        border: 0;
+        width: 100%;
+        height: 100%;
+        min-height: 100%;
+        transition: width 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+      .preview-stage iframe.mobile {
+        width: 375px;
+        max-width: 100%;
+        box-shadow: 0 0 40px #0001;
+      }
+      .preview-footer {
+        height: 33px;
+        display: flex;
+        align-items: center;
+        gap: 7px;
+        padding: 0 13px;
+        color: #777b85;
+        font-size: 9px;
+        border-top: 1px solid var(--line);
+        flex-shrink: 0;
+      }
+      .preview-footer .icon {
+        width: 12px;
+        height: 12px;
+        opacity: 0.6;
+      }
+      .preview-footer .dot {
+        width: 4px;
+        height: 4px;
+      }
+      .preview-footer button {
+        color: #9599a3;
+        font-size: 9px;
+      }
+      .statusbar {
+        height: 27px;
+        flex-shrink: 0;
+        border-top: 1px solid var(--line);
+        padding: 0 17px 0 19px;
+        display: flex;
+        align-items: center;
+        gap: 17px;
+        font-size: 9px;
+        color: #82858f;
+        background: #17181a;
+      }
+      .statusbar .row {
+        gap: 5px;
+      }
+      .statusbar .icon {
+        height: 12px;
+        width: 12px;
+        opacity: 0.8;
+      }
+      .statusbar button {
+        color: inherit;
+        padding: 2px 0;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .statusbar .status-brand {
+        color: #9c95b7;
+        font-size: 9px;
+      }
+      .statusbar .status-brand b {
+        font-size: 11px;
+        font-weight: 500;
+      }
+      .dropdown,
+      .contextmenu {
+        position: fixed;
+        z-index: 90;
+        border: 1px solid #ffffff16;
+        border-radius: 9px;
+        background: #242528ed;
+        backdrop-filter: blur(25px);
+        box-shadow: 0 10px 40px #0006;
+        padding: 5px;
+        min-width: 210px;
+        max-height: calc(100dvh - 24px);
+        overflow-y: auto;
+        animation: pop 0.12s ease-out;
+      }
+      .dropdown button,
+      .contextmenu button {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        width: 100%;
+        padding: 9px 10px;
+        text-align: left;
+        font-size: 11px;
+        color: #cccdd4;
+        border-radius: 5px;
+      }
+      .dropdown button:hover,
+      .contextmenu button:hover {
+        background: #ffffff0a;
+      }
+      .dropdown button kbd {
+        margin-left: auto;
+      }
+      .dropdown hr,
+      .contextmenu hr {
+        border: 0;
+        border-top: 1px solid var(--line);
+        margin: 5px 2px;
+      }
+      .dropdown .icon,
+      .contextmenu .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .modal-backdrop {
+        position: fixed;
+        z-index: 100;
+        inset: 0;
+        background: #08090b88;
+        backdrop-filter: blur(7px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        animation: fade 0.2s;
+      }
+      .modal {
+        background: #202123f5;
+        backdrop-filter: blur(35px);
+        border: 1px solid #ffffff1a;
+        border-radius: 14px;
+        box-shadow: 0 30px 130px #0008;
+        width: 540px;
+        max-width: 100%;
+        max-height: 88dvh;
+        overflow: auto;
+        animation: pop 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+        padding: 25px;
+      }
+      .modal-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 22px;
+      }
+      .modal-head h2 {
+        font-size: 17px;
+        font-weight: 550;
+        letter-spacing: -0.4px;
+        margin: 0;
+      }
+      .modal-head .icon-btn {
+        margin-left: auto;
+      }
+      .modal p {
+        font-size: 12px;
+        line-height: 1.8;
+        color: var(--muted);
+      }
+      .modal label.field {
+        display: flex;
+        flex-direction: column;
+        gap: 9px;
+        font-size: 11px;
+        margin: 18px 0;
+      }
+      .modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 8px;
+        margin-top: 23px;
+      }
+      .modal-footer .btn {
+        font-size: 11px;
+        padding: 9px 15px;
+      }
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 15px 0;
+        border-bottom: 1px solid #ffffff07;
+      }
+      .setting-row strong {
+        font-size: 11px;
+        font-weight: 500;
+        display: block;
+      }
+      .setting-row p {
+        font-size: 10px;
+        margin: 5px 0 0;
+        max-width: 290px;
+      }
+      .setting-row input[type="range"] {
+        width: 130px;
+      }
+      .setting-row select {
+        font-size: 11px;
+        padding: 7px;
+        max-width: 150px;
+      }
+      .toggle {
+        position: relative;
+        display: inline-block;
+        width: 32px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .toggle input {
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        z-index: 2;
+        cursor: pointer;
+      }
+      .toggle span {
+        display: block;
+        position: absolute;
+        inset: 0;
+        background: #42434a;
+        border-radius: 10px;
+        transition: 0.2s;
+      }
+      .toggle span:before {
+        content: "";
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        left: 3px;
+        top: 3px;
+        background: #ddd;
+        border-radius: 50%;
+        transition: 0.2s;
+      }
+      .toggle input:checked + span {
+        background: #9e96bd;
+      }
+      .toggle input:checked + span:before {
+        transform: translateX(14px);
+        background: white;
+      }
+      .theme-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 9px;
+        margin: 13px 0;
+      }
+      .theme-swatch {
+        border-radius: 7px;
+        overflow: hidden;
+        text-align: left;
+        border: 1px solid #ffffff0f;
+        padding: 0;
+      }
+      .theme-swatch.selected {
+        outline: 1px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .theme-colors {
+        display: flex;
+        height: 45px;
+        padding: 9px;
+        gap: 4px;
+      }
+      .theme-colors i {
+        flex: 1;
+        border-radius: 2px;
+        opacity: 0.8;
+      }
+      .theme-swatch small {
+        display: block;
+        padding: 7px 9px;
+        font-size: 9px;
+        background: #ffffff04;
+      }
+      .wallpaper-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 7px;
+        margin: 12px 0;
+      }
+      .wallpaper {
+        height: 48px;
+        border-radius: 5px;
+        border: 1px solid #ffffff18;
+        position: relative;
+        overflow: hidden;
+      }
+      .wallpaper.selected {
+        outline: 1px solid var(--accent);
+        outline-offset: 2px;
+      }
+      .wallpaper span {
+        font-size: 8px;
+        position: absolute;
+        bottom: 4px;
+        left: 5px;
+        text-shadow: 0 1px 5px black;
+        color: #ddd;
+      }
+      .setting-section {
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 1.4px;
+        color: #9a9da7;
+        margin: 24px 0 12px;
+        text-transform: uppercase;
+      }
+      .settings-modal {
+        width: 650px;
+      }
+      .settings-tabs {
+        display: flex;
+        gap: 5px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 12px;
+        margin-bottom: 14px;
+      }
+      .settings-tabs button {
+        font-size: 10px;
+        padding: 7px 12px;
+        color: #9699a4;
+        border-radius: 5px;
+      }
+      .settings-tabs button.active {
+        background: #ffffff08;
+        color: #e1dcf4;
+      }
+      .settings-bottom {
+        display: flex;
+        align-items: center;
+        margin-top: 20px;
+        border-top: 1px solid var(--line);
+        padding-top: 15px;
+        font-size: 9px;
+        color: #70737e;
+      }
+      .settings-bottom .icon-btn {
+        margin-right: 7px;
+      }
+      .document-view {
+        overflow: auto;
+        flex: 1;
+        min-height: 0;
+        padding: 35px 34px;
+        color: #b2b4be;
+        animation: fade 0.2s;
+      }
+      .document-view h1 {
+        font-size: 26px;
+        color: #e5e5ea;
+        font-weight: 550;
+        letter-spacing: -1px;
+        margin: 12px 0;
+      }
+      .document-view h2 {
+        font-size: 14px;
+        font-weight: 550;
+        color: #d9d9e2;
+        margin: 28px 0 12px;
+      }
+      .document-view p {
+        font-size: 11px;
+        line-height: 1.9;
+        color: #8f939f;
+      }
+      .document-view code {
+        color: #c7b4e8;
+        background: #ffffff06;
+        border-radius: 4px;
+        padding: 3px 5px;
+        font:
+          11px/1.8 "JetBrains Mono Variable",
+          monospace;
+      }
+      .manual-table {
+        border-collapse: collapse;
+        width: 100%;
+        font-size: 10px;
+        margin-top: 15px;
+      }
+      .manual-table td,
+      .manual-table th {
+        padding: 11px 8px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+      }
+      .manual-table th {
+        font-size: 9px;
+        color: #777d8b;
+        font-weight: 500;
+      }
+      .manual-table td:last-child {
+        color: #969ba7;
+        line-height: 1.6;
+      }
+      .tip-box {
+        margin: 23px 0;
+        padding: 12px 15px;
+        background: #c3b5ee06;
+        border: 1px solid #c3b5ee15;
+        border-radius: 7px;
+        font-size: 10px;
+        line-height: 1.8;
+        color: #a29ab9;
+      }
+      .ai-view {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 30px;
+        animation: fade 0.3s;
+      }
+      .ai-mark {
+        width: 51px;
+        height: 51px;
+        border: 1px solid #ffffff15;
+        border-radius: 15px;
+        background: linear-gradient(135deg, #d9c6fa0d, #ffffff02);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 21px;
+      }
+      .ai-mark .icon {
+        width: 25px;
+        height: 25px;
+        filter: invert(80%) sepia(12%) saturate(800%) hue-rotate(210deg);
+      }
+      .ai-view h1 {
+        font-size: 23px;
+        font-weight: 500;
+        letter-spacing: -0.8px;
+        text-align: center;
+        margin: 0 0 25px;
+      }
+      .ai-prompt {
+        border: 1px solid #ffffff18;
+        box-shadow: 0 15px 50px #0001;
+        border-radius: 12px;
+        background: #ffffff03;
+        width: 100%;
+        max-width: 440px;
+        padding: 16px;
+      }
+      .ai-prompt textarea {
+        height: 72px;
+        background: none;
+        width: 100%;
+        resize: none;
+        border: 0;
+        color: #777e8c;
+        outline: 0;
+        font-size: 11px;
+      }
+      .ai-prompt .model-btn {
+        margin-left: auto;
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        color: #979aa5;
+        font-size: 9px;
+      }
+      .model-logo {
+        width: 14px;
+        height: 14px;
+        filter: invert(0.8);
+      }
+      .submit-ai {
+        background: #c5bfda;
+        color: #28252e;
+        width: 25px;
+        height: 25px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .submit-ai .icon {
+        width: 14px;
+        height: 14px;
+        filter: brightness(0.3);
+      }
+      .ai-view > p {
+        font-size: 9px;
+        color: #737783;
+        margin-top: 15px;
+        text-align: center;
+        line-height: 1.7;
+      }
+      .stat-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 23px;
+      }
+      .stat-card {
+        background: #ffffff03;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 17px;
+      }
+      .stat-card b {
+        font-size: 26px;
+        font-weight: 500;
+        color: #e3dff1;
+        letter-spacing: -1px;
+      }
+      .stat-card span {
+        display: block;
+        color: #838896;
+        font-size: 9px;
+        margin-top: 8px;
+      }
+      .language-bar {
+        height: 7px;
+        border-radius: 5px;
+        background: #ffffff08;
+        overflow: hidden;
+        margin: 10px 0 20px;
+      }
+      .language-bar i {
+        display: block;
+        height: 100%;
+        background: var(--accent);
+        border-radius: 5px;
+      }
+      .template-card {
+        padding: 18px;
+        background: #ffffff03;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin: 12px 0;
+      }
+      .template-card h3 {
+        margin: 9px 0;
+        font-weight: 500;
+        font-size: 13px;
+      }
+      .template-card p {
+        font-size: 10px;
+      }
+      .template-card .btn {
+        margin-top: 7px;
+        font-size: 10px;
+      }
+      .search-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 16px;
+        margin-bottom: 10px;
+      }
+      .search-box input {
+        background: none;
+        border: 0;
+        font-size: 14px;
+        padding: 5px;
+        outline: 0;
+        width: 100%;
+      }
+      .search-result {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 11px;
+      }
+      .search-result:hover {
+        background: #ffffff06;
+      }
+      .search-result .muted {
+        font-size: 9px;
+        margin-left: auto;
+      }
+      .toast-stack {
+        position: fixed;
+        bottom: 44px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 150;
+        pointer-events: none;
+      }
+      .toast {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        border: 1px solid #ffffff20;
+        background: #303034ed;
+        backdrop-filter: blur(20px);
+        border-radius: 9px;
+        box-shadow: 0 8px 40px #0005;
+        padding: 12px 18px;
+        font-size: 11px;
+        animation: toast 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        margin-top: 8px;
+        color: #ddd;
+      }
+      .toast .icon {
+        height: 15px;
+        width: 15px;
+      }
+      .onboarding {
+        text-align: center;
+        padding: 25px 20px 12px;
+      }
+      .onboarding .brand {
+        font-size: 31px;
+        margin-bottom: 22px;
+      }
+      .onboarding h1 {
+        font-size: 32px;
+        font-weight: 500;
+        letter-spacing: -1.1px;
+        margin: 8px 0 12px;
+      }
+      .onboarding p {
+        font-size: 12px;
+      }
+      .onboarding input {
+        width: 100%;
+        margin: 22px 0 16px;
+        padding: 15px;
+        font-size: 13px;
+      }
+      .onboarding .btn {
+        width: 100%;
+        padding: 13px;
+      }
+      .step-dots {
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+        margin: 25px 0 5px;
+      }
+      .step-dots i {
+        height: 4px;
+        width: 4px;
+        border-radius: 3px;
+        background: #55545f;
+      }
+      .step-dots i.active {
+        width: 17px;
+        background: var(--accent);
+      }
+      .feature-list {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin: 24px 0;
+        text-align: left;
+      }
+      .feature-list div {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 12px;
+        font-size: 11px;
+        display: flex;
+        gap: 9px;
+        align-items: center;
+      }
+      .check-list {
+        max-height: 340px;
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        padding: 8px;
+      }
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 8px;
+        font-size: 11px;
+      }
+      .check-row input {
+        margin: 0;
+      }
+      .check-row.nested {
+        padding-left: 31px;
+      }
+      .publish-link {
+        width: 100%;
+        font-size: 11px;
+        line-height: 1.7;
+        margin-top: 15px;
+      }
+      .inspect-fields label {
+        display: flex;
+        flex-direction: column;
+        gap: 7px;
+        font-size: 10px;
+        color: var(--muted);
+        margin-top: 14px;
+      }
+      .inspect-fields input {
+        width: 100%;
+        padding: 9px;
+        font-size: 11px;
+      }
+      .inspector-intro {
+        padding: 0 14px 18px;
+        font-size: 10px;
+        line-height: 1.8;
+        color: #8d919d;
+      }
+      .inspect-fields {
+        padding: 0 14px;
+      }
+      .inspect-tag {
+        background: #ffffff05;
+        border: 1px solid var(--line);
+        padding: 9px;
+        border-radius: 6px;
+        font:
+          11px "JetBrains Mono Variable",
+          monospace;
+        color: #e39ab6;
+        margin: 0 14px 14px;
+      }
+      .game {
+        display: block;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        margin: 15px auto;
+        background: #151619;
+        max-width: 100%;
+      }
+      .wallpaper-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.5;
+        overflow: hidden;
+      }
+      .particle {
+        position: absolute;
+        border-radius: 50%;
+        background: #d4cae6;
+        animation: fall linear infinite;
+        opacity: 0.3;
+      }
+      .animated-stripes::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          120deg,
+          transparent 0px,
+          transparent 55px,
+          #c6b6f408 55px,
+          #c6b6f408 56px
+        );
+        animation: drift 20s linear infinite;
+      }
+      .has-wallpaper .sidebar,
+      .has-wallpaper .code-panel,
+      .has-wallpaper .preview-panel {
+        background-color: #1b1c1edb;
+        backdrop-filter: blur(18px);
+      }
+      .has-wallpaper .code-panel {
+        background: color-mix(in srgb, var(--editor) 90%, transparent);
+      }
+      .fullscreen-preview {
+        position: fixed !important;
+        inset: 14px !important;
+        z-index: 85 !important;
+        width: auto !important;
+      }
+      .fullscreen-preview .preview-stage {
+        flex: 1;
+      }
+      .empty-editor {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        text-align: center;
+        color: var(--muted);
+        padding: 25px;
+      }
+      .empty-editor .brand {
+        font-size: 40px;
+        opacity: 0.2;
+        margin-bottom: 15px;
+      }
+      .empty-editor p {
+        font-size: 11px;
+        line-height: 1.8;
+      }
+      .empty-editor .btn {
+        margin-top: 14px;
+      }
+      .no-motion *,
+      .no-motion *::before,
+      .no-motion *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #42444b;
+        border-radius: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      @keyframes pop {
+        from {
+          opacity: 0;
+          transform: translateY(6px) scale(0.98);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      @keyframes fade {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes toast {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fall {
+        from {
+          transform: translate(0, -30px);
+        }
+        to {
+          transform: translate(70px, 110vh);
+        }
+      }
+      @keyframes drift {
+        to {
+          background-position: 130px 0;
+        }
+      }
+      @media (min-width: 1500px) {
+        :root {
+          --sidebar-width: 240px;
+          --font-size: 14px;
+          --line-height: 27px;
+        }
+        .workbar {
+          height: 66px;
+        }
+        .titlebar {
+          height: 62px;
+        }
+        .file-row {
+          height: 36px;
+        }
+        .starter-card {
+          padding: 19px 15px;
+        }
+        .preview-address {
+          height: 39px;
+        }
+      }
+      @media (max-width: 1050px) {
+        :root {
+          --sidebar-width: 180px;
+          --font-size: 12px;
+          --line-height: 24px;
+          --editor-width: 54%;
+        }
+        .search-trigger {
+          width: 145px;
+        }
+        .workspace-title {
+          display: none;
+        }
+        .workbar {
+          gap: 10px;
+          padding-left: 74px;
+        }
+        .project-tag {
+          display: none;
+        }
+        .titlebar {
+          gap: 22px;
+        }
+        .file-tab {
+          min-width: 95px;
+          padding: 0 9px;
+          font-size: 9px;
+        }
+        .file-tab .close-tab {
+          margin-left: 0;
+        }
+        .starter-card {
+          padding: 12px 10px;
+        }
+        .code-highlight,
+        .code-input {
+          padding-left: 48px !important;
+        }
+        .line-numbers {
+          width: 39px;
+        }
+        .line-numbers div {
+          padding-right: 10px;
+        }
+        .device-switcher {
+          display: none;
+        }
+        .preview-footer {
+          font-size: 8px;
+          padding: 0 9px;
+        }
+      }
+      @media (max-width: 780px) {
+        :root {
+          --sidebar-width: 160px;
+          --editor-width: 100%;
+        }
+        .preview-panel {
+          display: none;
+        }
+        .preview-panel.mobile-open {
+          display: flex;
+          position: fixed;
+          inset: 115px 14px 45px 65px;
+          z-index: 40;
+        }
+        .main-panels > .resize-x {
+          display: none;
+        }
+        .code-panel {
+          flex: 1;
+          width: auto;
+        }
+        .search-trigger {
+          width: 30px;
+          justify-content: center;
+          padding: 0;
+        }
+        .search-trigger span,
+        .search-trigger kbd {
+          display: none;
+        }
+        .workbar {
+          padding-left: 72px;
+          gap: 10px;
+        }
+        .workbar .reset-btn span {
+          display: none;
+        }
+        .top-right .local-badge {
+          display: none;
+        }
+        .preview-toggle-mobile {
+          display: inline-flex !important;
+        }
+        .statusbar {
+          gap: 9px;
+          font-size: 8px;
+        }
+        .statusbar .hide-small {
+          display: none;
+        }
+        .brand {
+          font-size: 21px;
+        }
+        .menus {
+          gap: 0;
+        }
+        .titlebar {
+          gap: 15px;
+        }
+        .menu-trigger {
+          padding: 7px;
+        }
+        .sidebar {
+          min-width: 140px;
+        }
+        .code-panel.hidden + .resize-x + .preview-panel {
+          display: flex;
+          position: static;
+        }
+        .project-name {
+          font-size: 11px;
+        }
+      }
+      @media (max-width: 540px) {
+        .sidebar,
+        .sidebar-resizer {
+          display: none;
+        }
+        .sidebar.mobile-open {
+          display: flex;
+          position: fixed;
+          left: 50px;
+          top: 117px;
+          bottom: 43px;
+          width: 235px;
+          z-index: 65;
+          box-shadow: 12px 0 50px #0007;
+        }
+        .workbar {
+          padding-left: 65px;
+          padding-right: 10px;
+          gap: 8px;
+        }
+        .project-name {
+          font-size: 10px;
+        }
+        .workbar .separator,
+        .reset-btn,
+        .project-name > .icon {
+          display: none !important;
+        }
+        .workbar .btn {
+          padding: 0 9px;
+        }
+        .activity {
+          width: 50px;
+        }
+        .activity-btn.active:before {
+          left: -5px;
+        }
+        .workarea {
+          padding-right: 8px;
+        }
+        .workbar .spacer {
+          min-width: 0;
+        }
+        .titlebar {
+          padding: 0 12px;
+          gap: 16px;
+        }
+        .menus .menu-trigger {
+          font-size: 10px;
+        }
+        .top-right {
+          gap: 8px;
+        }
+        .top-right > .icon-btn {
+          display: none;
+        }
+        .file-tab {
+          min-width: 96px;
+        }
+        .preview-panel.mobile-open {
+          left: 50px;
+          right: 8px;
+        }
+        .statusbar {
+          padding: 0 9px;
+        }
+        .statusbar .encoding {
+          display: none;
+        }
+        .modal-backdrop {
+          padding: 12px;
+        }
+        .modal {
+          padding: 19px;
+        }
+        .document-view {
+          padding: 25px 20px;
+        }
+        .ai-view {
+          padding: 20px;
+        }
+        .ai-view h1 {
+          font-size: 20px;
+        }
+        .theme-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *:before,
+        *:after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="wallpaper" class="wallpaper-layer"></div>
+    <div class="app">
+      <header class="titlebar">
+        <button class="brand" data-action="welcome" aria-label="cobalt+ welcome">
+          cobalt<b>+</b>
+        </button>
+        <nav class="menus" aria-label="Application menu">
+          <button class="menu-trigger" data-menu="File">File</button>
+          <button class="menu-trigger" data-menu="Edit">Edit</button>
+          <button class="menu-trigger" data-menu="View">View</button>
+          <button class="menu-trigger" data-menu="Run">Run</button>
+        </nav>
+        <div class="workspace-title">
+          <i data-icon="panel-top" class="sm"></i> a little space for your next big idea
+        </div>
+        <div class="top-right">
+          <span class="local-badge"><span class="dot"></span> All changes saved locally</span
+          ><button class="icon-btn" data-action="help" title="Keyboard shortcuts">
+            <i data-icon="circle-help"></i></button
+          ><button
+            class="avatar"
+            data-action="welcome"
+            title="Personalize your workspace"
+            id="avatar"
+          >
+            Y
+          </button>
+        </div>
+      </header>
+      <div class="workbar">
+        <div class="project-name">
+          <i data-icon="folder-open"></i><span id="project-name">my-first-project</span
+          ><span class="project-tag">WORKSPACE</span>
+        </div>
+        <div class="spacer"></div>
+        <button class="search-trigger" data-action="search">
+          <i data-icon="search" class="sm"></i><span>Search anything...</span><kbd>⌘ K</kbd>
+        </button>
+        <button class="reset-btn" data-action="reset" title="Reset starter workspace">
+          <i data-icon="rotate-ccw" class="sm"></i><span>Reset</span>
+        </button>
+        <div class="separator"></div>
+        <button class="btn" data-action="publish">
+          <i data-icon="upload" class="sm"></i>Publish
+        </button>
+        <button class="btn primary run-btn" data-action="run">
+          <i data-icon="play" class="sm"></i>Run
+          <kbd style="color: #5c566d; border-color: #0001; background: #00000005">⌘ ↵</kbd>
+        </button>
+      </div>
+      <main class="workarea">
+        <nav class="activity" aria-label="Workspace sections">
+          <button
+            class="activity-btn active"
+            data-section="explorer"
+            data-tip="Explorer"
+            title="Explorer"
+          >
+            <i data-icon="files"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="templates"
+            data-tip="Templates"
+            title="Templates"
+          >
+            <i data-icon="layout-template"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="manual"
+            data-tip="Language manual"
+            title="Language manual"
+          >
+            <i data-icon="book-open"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="stats"
+            data-tip="Your statistics"
+            title="Your statistics"
+          >
+            <i data-icon="chart-no-axes-combined"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="terminal"
+            data-tip="Terminal · beta"
+            title="Terminal · beta"
+          >
+            <i data-icon="square-terminal"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="inspect"
+            data-tip="Inspect mode"
+            title="Inspect mode"
+          >
+            <i data-icon="scan"></i>
+          </button>
+          <button
+            class="activity-btn"
+            data-section="ai"
+            data-tip="Cobalt AI · coming soon"
+            title="Cobalt AI · coming soon"
+          >
+            <i data-icon="sparkles"></i>
+          </button>
+          <div class="activity-bottom">
+            <button
+              class="activity-btn"
+              data-action="singlefile"
+              data-tip="Download single HTML"
+              title="Download single HTML"
+            >
+              <i data-icon="download"></i>
+            </button>
+            <button
+              class="activity-btn"
+              data-action="settings"
+              data-tip="Settings"
+              title="Settings"
+            >
+              <i data-icon="settings-2"></i>
+            </button>
+          </div>
+        </nav>
+        <aside class="sidebar" id="sidebar">
+          <div class="panel-heading">
+            <span class="eyebrow" id="sidebar-title">Explorer</span>
+            <div class="spacer"></div>
+            <button class="icon-btn" data-action="new-file" title="New file">
+              <i data-icon="file-plus-2" class="sm"></i></button
+            ><button class="icon-btn" data-action="new-folder" title="New folder">
+              <i data-icon="folder-plus" class="sm"></i></button
+            ><button class="icon-btn" data-action="toggle-sidebar" title="Close sidebar">
+              <i data-icon="panel-left-close" class="sm"></i>
+            </button>
+          </div>
+          <div class="explorer-content" id="explorer"></div>
+          <div class="sidebar-bottom" id="sidebar-bottom">
+            <div class="starter-card">
+              <i data-icon="sparkles"></i>
+              <h3>Your next big idea starts here.</h3>
+              <p>A blank canvas. A little curiosity.<br />Something uniquely yours.</p>
+              <button data-action="welcome">
+                Make yourself at home <i data-icon="arrow-up-right"></i>
+              </button>
+            </div>
+            <div class="explorer-footer">
+              <div class="row">
+                <i data-icon="hard-drive" class="sm"></i><span>Stored in your browser</span>
+                <div class="spacer"></div>
+                <i data-icon="shield-check" class="sm"></i>
+              </div>
+            </div>
+          </div>
+        </aside>
+        <div
+          class="resize-x sidebar-resizer"
+          id="sidebar-resizer"
+          title="Drag to resize explorer"
+        ></div>
+        <div class="main-panels">
+          <section class="code-panel" id="code-panel" aria-label="Code editor">
+            <div class="editor-tabs" id="tabs"></div>
+            <div class="breadcrumbs" id="breadcrumbs"></div>
+            <div class="editor-body" id="editor-body">
+              <div class="code-scroll" id="code-scroll">
+                <div class="code-inner">
+                  <div class="line-numbers" id="line-numbers"></div>
+                  <pre class="code-highlight" aria-hidden="true"><code id="highlight"></code></pre>
+                  <textarea
+                    class="code-input"
+                    id="code-input"
+                    aria-label="Code editor"
+                    spellcheck="false"
+                    autocapitalize="off"
+                    autocomplete="off"
+                    autocorrect="off"
+                  ></textarea>
+                </div>
+              </div>
+            </div>
+            <div id="document" class="hidden"></div>
+            <div class="editor-mini-status" id="editor-mini-status">
+              <i data-icon="check"></i><span id="editor-save">Saved</span>
+              <div class="spacer"></div>
+              <button data-action="manual">
+                Need a hand? Open the manual <i data-icon="arrow-up-right"></i>
+              </button>
+            </div>
+            <section class="terminal" id="terminal" aria-label="Terminal">
+              <div class="terminal-resize" id="terminal-resizer"></div>
+              <div class="terminal-heading">
+                <span class="terminal-label">TERMINAL</span><span class="pill">Beta</span>
+                <div class="spacer"></div>
+                <button class="icon-btn" data-action="clear-console" title="Clear console">
+                  <i data-icon="trash-2" class="sm"></i></button
+                ><button class="icon-btn" data-action="toggle-terminal" title="Close terminal">
+                  <i data-icon="x" class="sm"></i>
+                </button>
+              </div>
+              <div class="console-lines" id="console-lines"></div>
+              <form class="console-input" id="console-form">
+                <span>›</span
+                ><input
+                  id="console-command"
+                  aria-label="Terminal command"
+                  placeholder="Type help for available commands"
+                  autocomplete="off"
+                />
+              </form>
+            </section>
+          </section>
+          <div class="resize-x" id="editor-resizer" title="Drag to resize editor and preview"></div>
+          <section class="preview-panel" id="preview-panel" aria-label="Live preview">
+            <div class="preview-heading">
+              <i data-icon="panel-top"></i><span>Preview</span
+              ><span class="live-badge"><span class="dot"></span> LIVE</span>
+              <div class="spacer"></div>
+              <button class="icon-btn" data-action="inspect" title="Inspect preview">
+                <i data-icon="mouse-pointer-2"></i></button
+              ><button class="icon-btn" data-action="new-tab" title="Open preview in a new tab">
+                <i data-icon="external-link"></i></button
+              ><button class="icon-btn" data-action="fullscreen" title="Fullscreen preview">
+                <i data-icon="maximize"></i></button
+              ><button class="icon-btn" data-action="toggle-preview" title="Close preview">
+                <i data-icon="x"></i>
+              </button>
+            </div>
+            <div class="preview-address">
+              <button class="icon-btn" data-action="refresh" title="Refresh preview">
+                <i data-icon="rotate-cw" class="sm"></i>
+              </button>
+              <div class="address">
+                <i data-icon="lock-keyhole"></i
+                ><span>cobalt.local / <span id="preview-file">index.html</span></span>
+              </div>
+              <div class="device-switcher">
+                <button class="active" data-device="desktop" title="Desktop preview">
+                  <i data-icon="monitor"></i></button
+                ><button data-device="mobile" title="Mobile preview">
+                  <i data-icon="smartphone"></i>
+                </button>
+              </div>
+            </div>
+            <div class="preview-stage" id="preview-stage">
+              <iframe
+                id="preview"
+                title="Your live website preview"
+                sandbox="allow-scripts allow-forms allow-modals"
+              ></iframe>
+            </div>
+            <div class="preview-footer">
+              <span class="dot"></span
+              ><span id="preview-state">You're looking at your live creation.</span>
+              <div class="spacer"></div>
+              <i data-icon="monitor"></i><span id="preview-dimensions">Responsive</span>
+            </div>
+          </section>
+        </div>
+      </main>
+      <footer class="statusbar">
+        <span class="row"><i data-icon="git-branch"></i> main</span>
+        <button data-action="toggle-terminal">
+          <i data-icon="circle-x"></i><span id="error-count">0</span
+          ><i data-icon="triangle-alert" style="margin-left: 4px"></i><span id="warn-count">0</span>
+        </button>
+        <span class="row hide-small"><i data-icon="cloud"></i> Saved locally</span>
+        <div class="spacer"></div>
+        <span id="cursor-status">Ln 1, Col 1</span
+        ><button data-action="settings" class="hide-small">Spaces: 2</button
+        ><span class="encoding">UTF-8</span><span id="language-status">HTML</span>
+        <button data-action="toggle-preview"><i data-icon="radio-tower"></i> Live preview</button>
+        <span class="status-brand">cobalt<b>+</b></span>
+        <button data-action="toggle-terminal" title="Toggle terminal">
+          <i data-icon="panel-bottom"></i>
+        </button>
+      </footer>
+    </div>
+    <div id="overlay-root"></div>
+    <div id="dropdown-root"></div>
+    <div class="toast-stack" id="toasts" aria-live="polite"></div>
+    <script>
+      window.Prism = { manual: true };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script>
+      (() => {
+        "use strict";
+        const $ = (s, root = document) => root.querySelector(s);
+        const $$ = (s, root = document) => [...root.querySelectorAll(s)];
+        const escapeHTML = (s) =>
+          String(s).replace(
+            /[&<>"']/g,
+            (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c],
+          );
+        const icon = (name, cls = "") =>
+          `<img class="icon ${cls}" src="https://cdn.jsdelivr.net/npm/lucide-static@0.468.0/icons/${name}.svg" alt="" width="17" height="17" loading="lazy">`;
+        if (showShared()) return;
+        function cleanSource(html) {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          doc.querySelectorAll("script").forEach((s) => {
+            if (
+              (s.getAttribute("src") || "").includes("/@vite/") ||
+              /^\s*import RefreshRuntime from /.test(s.textContent)
+            )
+              s.remove();
+          });
+          doc
+            .querySelectorAll('link[rel="icon"][href="/favicon.png"]')
+            .forEach((el) => el.remove());
+          return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        }
+        let standaloneSource = cleanSource(document.documentElement.outerHTML);
+        function hydrate(root = document) {
+          $$("[data-icon]", root).forEach((el) => {
+            el.outerHTML = icon(el.dataset.icon, el.className);
+          });
+        }
+        hydrate();
+        const phrases = [
+          "deepseek > claude",
+          "i love cs2",
+          "try monoxide.dev, it’s a pretty cool proxy",
+          "you can statically host this in one file, by the way",
+          "AI coming soon…",
+          "cobalt, but cooler! (because it has a plus)",
+          "lmk what you think about this editor",
+          "questions/suggestions? ask me! don’t know who I am? then I don’t know you either!",
+          "guys I'm adding unlimited Opus 5.5 and Astra in v2 trust me",
+          "ohnepixel just saying shi bro",
+        ];
+        const welcomeCode = `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport"\n    content="width=device-width, initial-scale=1.0" />\n  <title>My first creation</title>\n  <link rel="stylesheet" href="styles.css" />\n</head>\n<body>\n  <!-- A little code. A lot of possibility. -->\n  <p id="hello">cobalt, but cooler!</p>\n\n  <script src="script.js"><\/script>\n</body>\n</html>`;
+        const welcomeCSS = `/* Make yourself at home. */\n@import url('https://cdn.jsdelivr.net/npm/@fontsource-variable/inter@5.2.6/index.css');\n\nbody {\n  margin: 0;\n  min-height: 100vh;\n  display: grid;\n  place-items: center;\n  padding: 36px;\n  box-sizing: border-box;\n  background: #f6f5f1;\n  color: #343330;\n  font-family: 'Inter Variable', sans-serif;\n}\n\np {\n  max-width: 440px;\n  text-align: center;\n  font-size: clamp(24px, 3.2vw, 38px);\n  font-weight: 500;\n  line-height: 1.35;\n  letter-spacing: -1.6px;\n  animation: appear .7s ease-out;\n}\n\n@keyframes appear {\n  from { opacity: 0; transform: translateY(8px); }\n  to { opacity: 1; transform: translateY(0); }\n}`;
+        const welcomeJS = `// A different hello, every little while.\nconst messages = ${JSON.stringify(phrases, null, 2)};\n\nlet current = 5;\nsetInterval(() => {\n  current = (current + 1) % messages.length;\n  document.querySelector('#hello').textContent =\n    messages[current];\n}, 7000);\n\nconsole.log('A little code. A lot of possibility.');`;
+        const starter = {
+          "index.html": welcomeCode,
+          "styles.css": welcomeCSS,
+          "script.js": welcomeJS,
+        };
+        const defaultSettings = {
+          theme: "Cobalt dark",
+          fontSize: 13,
+          lineHeight: 25,
+          wallpaper: 0,
+          animation: "None",
+          motion: true,
+          live: true,
+          wrap: false,
+          ligatures: true,
+          accent: "#cec7f1",
+          editor: "#1b1c1e",
+        };
+        const themes = {
+          "Cobalt dark": {
+            bg: "#151617",
+            panel: "#1b1c1e",
+            editor: "#1b1c1e",
+            raised: "#242527",
+            line: "#303133",
+            text: "#e7e7e9",
+            muted: "#8b8c92",
+            accent: "#cec7f1",
+          },
+          Midnight: {
+            bg: "#11151e",
+            panel: "#171d29",
+            editor: "#171d29",
+            raised: "#222c3c",
+            line: "#2b3547",
+            text: "#dfe6f2",
+            muted: "#8b98ae",
+            accent: "#9dc4f5",
+          },
+          Forest: {
+            bg: "#141b18",
+            panel: "#1a241e",
+            editor: "#1a241e",
+            raised: "#26322b",
+            line: "#344339",
+            text: "#e1e8dc",
+            muted: "#8d9c8e",
+            accent: "#b7cba1",
+          },
+          Rosé: {
+            bg: "#1c171c",
+            panel: "#261f26",
+            editor: "#261f26",
+            raised: "#352934",
+            line: "#443443",
+            text: "#eddfeb",
+            muted: "#ad91a6",
+            accent: "#e2b7ce",
+          },
+          Custom: {
+            bg: "#151617",
+            panel: "#1b1c1e",
+            editor: "#1b1c1e",
+            raised: "#242527",
+            line: "#303133",
+            text: "#e7e7e9",
+            muted: "#8b8c92",
+            accent: "#cec7f1",
+          },
+        };
+        const wallpapers = [
+          { name: "None", bg: "#151617" },
+          {
+            name: "Dusk",
+            bg: "radial-gradient(ellipse at 20% 90%,#655879 0%,#242534 45%,#151617 80%)",
+          },
+          {
+            name: "Aurora",
+            bg: "radial-gradient(ellipse at 80% 0%,#2c655e 0%,#232940 45%,#151617 80%)",
+          },
+          {
+            name: "Ember",
+            bg: "radial-gradient(ellipse at 10% 100%,#874f40 0%,#352533 45%,#151617 80%)",
+          },
+          {
+            name: "Moonlight",
+            bg: "radial-gradient(ellipse at 50% 50%,#646777 0%,#303340 40%,#151617 90%)",
+          },
+          { name: "Ocean", bg: "linear-gradient(140deg,#173f50,#1c243b 50%,#151617)" },
+          { name: "Lavender", bg: "linear-gradient(140deg,#4d3e61,#252438 50%,#151617)" },
+          { name: "Moss", bg: "linear-gradient(140deg,#394936,#202e2b 50%,#151617)" },
+          {
+            name: "Graphite",
+            bg: "repeating-linear-gradient(140deg,#26282b 0,#26282b 1px,#171819 1px,#171819 30px)",
+          },
+          {
+            name: "Contour",
+            bg: "repeating-radial-gradient(ellipse at 10% 100%,#323039 0,#323039 1px,#1b1b22 1px,#1b1b22 30px)",
+          },
+        ];
+        function stored(key, fallback) {
+          try {
+            return JSON.parse(localStorage.getItem(key)) ?? fallback;
+          } catch {
+            return fallback;
+          }
+        }
+        let state = stored("cobalt.workspace", null);
+        let files = state?.files && Object.keys(state.files).length ? state.files : { ...starter };
+        let folders = state?.folders || ["assets"];
+        let active = files[state?.active] !== undefined ? state.active : Object.keys(files)[0];
+        let tabs = (state?.tabs || Object.keys(files)).filter((n) => files[n] !== undefined);
+        if (!tabs.includes(active)) tabs.push(active);
+        let settings = { ...defaultSettings, ...stored("cobalt.settings", {}) };
+        let stats = {
+          ...{ keystrokes: 0, runs: 0, seconds: 0, edits: 0, languages: {} },
+          ...stored("cobalt.stats", {}),
+        };
+        let profile = stored("cobalt.profile", { name: "", complete: false });
+        let section = "explorer",
+          special = null,
+          closedFolders = new Set(),
+          logs = [],
+          saveTimer,
+          previewTimer,
+          watermarkTimer,
+          localDirectory = null,
+          selectedElement = null,
+          inspectMode = false,
+          settingsTab = "Appearance",
+          onboardStep = 0;
+        const editor = $("#code-input"),
+          frame = $("#preview");
+        const extMap = {
+          html: "markup",
+          htm: "markup",
+          svg: "markup",
+          xml: "markup",
+          css: "css",
+          scss: "scss",
+          js: "javascript",
+          mjs: "javascript",
+          jsx: "jsx",
+          ts: "typescript",
+          tsx: "tsx",
+          json: "json",
+          py: "python",
+          md: "markdown",
+          java: "java",
+          c: "c",
+          h: "c",
+          cpp: "cpp",
+          rs: "rust",
+          sql: "sql",
+          php: "php",
+          go: "go",
+          rb: "ruby",
+          sh: "bash",
+          yml: "yaml",
+          yaml: "yaml",
+          txt: "plain",
+          toml: "toml",
+        };
+        const langNames = {
+          markup: "HTML",
+          javascript: "JavaScript",
+          typescript: "TypeScript",
+          python: "Python",
+          markdown: "Markdown",
+          plain: "Plain text",
+          css: "CSS",
+          scss: "SCSS",
+          json: "JSON",
+          jsx: "JSX",
+          tsx: "TSX",
+          cpp: "C++",
+          c: "C",
+          rust: "Rust",
+          sql: "SQL",
+          php: "PHP",
+          java: "Java",
+          go: "Go",
+          ruby: "Ruby",
+          bash: "Shell",
+          yaml: "YAML",
+          toml: "TOML",
+        };
+        const language = (name) => extMap[name?.split(".").pop().toLowerCase()] || "plain";
+        function fileIcon(name) {
+          const lang = language(name),
+            map = {
+              markup: "html5",
+              javascript: "javascript",
+              typescript: "typescript",
+              css: "css3",
+              python: "python",
+              json: "json",
+              markdown: "markdown",
+              rust: "rust",
+              java: "java",
+              cpp: "cplusplus",
+              c: "c",
+              go: "go",
+              ruby: "ruby",
+              php: "php",
+              sql: "azuresqldatabase",
+              jsx: "react",
+              tsx: "react",
+              bash: "bash",
+              yaml: "yaml",
+              scss: "sass",
+            };
+          return map[lang]
+            ? `<img class="file-icon" alt="" src="https://cdn.jsdelivr.net/gh/devicons/devicon@v2.16.0/icons/${map[lang]}/${map[lang]}-original.svg">`
+            : icon("file-code-2", "sm");
+        }
+        function persist() {
+          try {
+            localStorage.setItem(
+              "cobalt.workspace",
+              JSON.stringify({ files, folders, active, tabs }),
+            );
+            localStorage.setItem("cobalt.settings", JSON.stringify(settings));
+            localStorage.setItem("cobalt.stats", JSON.stringify(stats));
+            localStorage.setItem("cobalt.profile", JSON.stringify(profile));
+            $("#editor-save").textContent = "Saved";
+          } catch {
+            toast(
+              "Browser storage is full. Download your workspace to keep it safe.",
+              "triangle-alert",
+            );
+          }
+        }
+        function toast(text, name = "check") {
+          const el = document.createElement("div");
+          el.className = "toast";
+          el.innerHTML = icon(name) + `<span>${escapeHTML(text)}</span>`;
+          $("#toasts").append(el);
+          setTimeout(() => el.remove(), 4200);
+        }
+        function log(text, type = "info") {
+          logs.push({ text: String(text), type, time: new Date().toLocaleTimeString("en-GB") });
+          if (logs.length > 200) logs.shift();
+          renderConsole();
+        }
+        function renderConsole() {
+          $("#console-lines").innerHTML = logs
+            .map(
+              (l) =>
+                `<div class="console-line ${l.type}"><time>${l.time}</time><span>${l.type === "info" ? '<span class="console-tag">[cobalt]</span> ' : ""}${escapeHTML(l.text)}</span></div>`,
+            )
+            .join("");
+          $("#console-lines").scrollTop = 1e8;
+          $("#error-count").textContent = logs.filter((l) => l.type === "error").length;
+          $("#warn-count").textContent = logs.filter((l) => l.type === "warn").length;
+        }
+        function applySettings() {
+          const t = { ...(themes[settings.theme] || themes["Cobalt dark"]) };
+          if (settings.theme === "Custom") {
+            t.accent = settings.accent;
+            t.editor = settings.editor;
+            t.panel = settings.editor;
+          }
+          for (const [k, v] of Object.entries(t))
+            document.documentElement.style.setProperty("--" + k, v);
+          document.documentElement.style.setProperty("--font-size", settings.fontSize + "px");
+          document.documentElement.style.setProperty("--line-height", settings.lineHeight + "px");
+          document.body.classList.toggle("no-motion", !settings.motion);
+          document.body.classList.toggle(
+            "has-wallpaper",
+            settings.wallpaper !== 0 || settings.animation !== "None",
+          );
+          editor.style.fontVariantLigatures = settings.ligatures ? "normal" : "none";
+          $(".code-highlight").style.fontVariantLigatures = settings.ligatures ? "normal" : "none";
+          $("#wallpaper").style.background = wallpapers[settings.wallpaper]?.bg || wallpapers[0].bg;
+          $("#wallpaper").className =
+            "wallpaper-layer" + (settings.animation === "Stripes" ? " animated-stripes" : "");
+          $("#wallpaper").innerHTML = "";
+          if (["Particles", "Snow", "Rain", "Leaves"].includes(settings.animation)) {
+            for (let i = 0; i < 35; i++) {
+              const p = document.createElement("span");
+              p.className = "particle";
+              const rain = settings.animation === "Rain",
+                leaf = settings.animation === "Leaves";
+              p.style.cssText = `left:${Math.random() * 100}%;top:-30px;width:${rain ? 1 : leaf ? 8 : Math.random() * 3 + 2}px;height:${rain ? 28 : leaf ? 5 : Math.random() * 3 + 2}px;animation-duration:${rain ? 1 + Math.random() : 7 + Math.random() * 15}s;animation-delay:-${Math.random() * 20}s;background:${leaf ? "#b69b70" : settings.animation === "Snow" ? "#fff" : "#bdb0e4"};border-radius:${leaf ? "0 70% 0 70%" : "50%"}`;
+              $("#wallpaper").append(p);
+            }
+          }
+          persist();
+          highlight();
+        }
+        function renderExplorer() {
+          if (section === "inspect") {
+            renderInspector();
+            return;
+          }
+          $("#sidebar-title").textContent = "Explorer";
+          $("#sidebar-bottom").classList.remove("hidden");
+          function fileRow(name, depth = 0) {
+            return `<div class="file-row ${name === active && !special ? "selected" : ""}" style="padding-left:${31 + depth * 15}px" data-file="${escapeHTML(name)}">${fileIcon(name)}<span>${escapeHTML(name.split("/").pop())}</span>${name === active && !special ? '<span class="file-dot"></span>' : ""}</div>`;
+          }
+          const folderSet = new Set(folders);
+          Object.keys(files).forEach((n) => {
+            const p = n.split("/");
+            p.pop();
+            while (p.length) {
+              folderSet.add(p.join("/"));
+              p.pop();
+            }
+          });
+          function tree(parent = "", depth = 0) {
+            let out = "";
+            for (const f of [...folderSet].sort()) {
+              if ((f.includes("/") ? f.slice(0, f.lastIndexOf("/")) : "") !== parent) continue;
+              const closed = closedFolders.has(f);
+              out += `<button class="folder-row subfolder" style="padding-left:${28 + depth * 15}px;width:100%" data-folder="${escapeHTML(f)}">${icon(closed ? "chevron-right" : "chevron-down", "sm")}${icon("folder", "sm")}<span>${escapeHTML(f.split("/").pop())}</span></button>`;
+              if (!closed) out += tree(f, depth + 1);
+            }
+            for (const n of Object.keys(files)) {
+              if ((n.includes("/") ? n.slice(0, n.lastIndexOf("/")) : "") === parent)
+                out += fileRow(n, depth);
+            }
+            return out;
+          }
+          $("#explorer").innerHTML =
+            `<div class="folder-row">${icon("chevron-down", "sm")}<span>MY FIRST PROJECT</span></div>` +
+            tree();
+          $("#sidebar-bottom").classList.toggle("hidden", window.innerHeight < 640);
+        }
+        function renderTabs() {
+          $("#tabs").innerHTML =
+            tabs
+              .filter((n) => files[n] !== undefined)
+              .map(
+                (n) =>
+                  `<button class="file-tab ${active === n && !special ? "active" : ""}" data-file="${escapeHTML(n)}">${fileIcon(n)}${escapeHTML(n.split("/").pop())}<span class="close-tab" role="button" tabindex="0" data-close-tab="${escapeHTML(n)}" aria-label="Close ${escapeHTML(n)}">${icon("x", "sm")}</span></button>`,
+              )
+              .join("") +
+            (special
+              ? `<button class="file-tab active" data-special="${special}">${icon({ manual: "book-open", stats: "chart-no-axes-combined", ai: "sparkles", templates: "layout-template" }[special], "sm")}${{ manual: "Manual", stats: "Statistics", ai: "Cobalt AI", templates: "Templates" }[special]}<span class="close-tab" role="button" tabindex="0" data-close-special="true" aria-label="Close document">${icon("x", "sm")}</span></button>`
+              : "") +
+            `<div class="tab-actions"><button class="icon-btn" data-action="new-file" title="New file">${icon("plus", "sm")}</button><button class="icon-btn" data-action="toggle-editor" title="Close editor">${icon("panel-left-close", "sm")}</button></div>`;
+          $("#breadcrumbs").innerHTML =
+            `<span>my-first-project</span>${icon("chevron-right")}${special ? icon({ manual: "book-open", stats: "chart-no-axes-combined", ai: "sparkles", templates: "layout-template" }[special]) : fileIcon(active)}<span>${escapeHTML(special ? { manual: "Language manual", stats: "Your coding activity", ai: "Cobalt AI", templates: "Templates" }[special] : active || "No file selected")}</span>`;
+        }
+        function highlight() {
+          const code = editor.value,
+            lang = language(active);
+          $("#highlight").className = "language-" + lang;
+          if (window.Prism?.languages?.[lang])
+            $("#highlight").innerHTML = Prism.highlight(code + "\n", Prism.languages[lang], lang);
+          else {
+            $("#highlight").textContent = code + "\n";
+            if (window.Prism && Prism.plugins?.autoloader && lang !== "plain") {
+              Prism.plugins.autoloader.loadLanguages(lang, () => {
+                if (language(active) === lang) highlight();
+              });
+            }
+          }
+          $("#line-numbers").innerHTML = Array.from(
+            { length: code.split("\n").length },
+            (_, i) => `<div>${i + 1}</div>`,
+          ).join("");
+          const longest = Math.max(
+            45,
+            ...code.split("\n").map((l) => l.replace(/\t/g, "  ").length),
+          );
+          $(".code-inner").style.width = `max(100%, calc(${longest}ch + 95px))`;
+          $(".code-inner").style.minHeight =
+            Math.max(
+              $("#code-scroll").clientHeight,
+              code.split("\n").length * settings.lineHeight + 115,
+            ) + "px";
+          updateCursor();
+        }
+        function updateCursor() {
+          let lines = editor.value.slice(0, editor.selectionStart).split("\n");
+          $("#cursor-status").textContent = `Ln ${lines.length}, Col ${lines.at(-1).length + 1}`;
+          $("#language-status").textContent = langNames[language(active)] || "Text";
+          $$("#line-numbers div").forEach((el, i) =>
+            el.classList.toggle("current", i === lines.length - 1),
+          );
+        }
+        function openFile(name) {
+          if (files[name] === undefined) return;
+          active = name;
+          special = null;
+          if (!tabs.includes(name)) tabs.push(name);
+          $("#code-panel").classList.remove("hidden");
+          $("#editor-resizer").classList.remove("hidden");
+          $("#editor-body").classList.remove("hidden");
+          $("#document").className = "hidden";
+          $("#editor-mini-status").classList.remove("hidden");
+          editor.value = files[name];
+          if (matchMedia("(max-width:540px)").matches && !inspectMode)
+            $("#sidebar").classList.remove("mobile-open");
+          renderTabs();
+          renderExplorer();
+          highlight();
+          $("#code-scroll").scrollTop = 0;
+          persist();
+        }
+        function closeTab(name) {
+          tabs = tabs.filter((n) => n !== name);
+          if (active === name && !special) {
+            if (tabs.length) openFile(tabs.at(-1));
+            else {
+              active = null;
+              showEmpty();
+            }
+          }
+          renderTabs();
+          persist();
+        }
+        function showEmpty() {
+          $("#editor-body").classList.add("hidden");
+          $("#editor-mini-status").classList.add("hidden");
+          $("#document").className = "empty-editor";
+          $("#document").innerHTML =
+            `<div class="brand">cobalt<b>+</b></div><p>Room for your next big idea.<br />Open a file from the explorer, or start something new.</p><button class="btn" data-action="new-file">${icon("plus", "sm")} New file</button>`;
+          renderTabs();
+        }
+        function openDocument(type) {
+          special = type;
+          $("#code-panel").classList.remove("hidden");
+          $("#editor-resizer").classList.remove("hidden");
+          $("#editor-body").classList.add("hidden");
+          $("#editor-mini-status").classList.add("hidden");
+          $("#document").className = type === "ai" ? "ai-view" : "document-view";
+          renderTabs();
+          if (type === "manual") renderManual();
+          if (type === "stats") renderStats();
+          if (type === "ai") renderAI();
+          if (type === "templates") renderTemplates();
+          renderExplorer();
+        }
+        function closeDocument() {
+          special = null;
+          if (active && files[active] !== undefined) openFile(active);
+          else if (tabs.length) openFile(tabs.at(-1));
+          else showEmpty();
+        }
+        function resolveFile(ref, base) {
+          if (/^(https?:|data:|blob:|\/\/|#)/.test(ref)) return null;
+          const bits = (base.includes("/") ? base.slice(0, base.lastIndexOf("/") + 1) : "")
+            .split("/")
+            .filter(Boolean);
+          for (const p of ref.split(/[?#]/)[0].split("/")) {
+            if (p === "..") bits.pop();
+            else if (p && p !== ".") bits.push(p);
+          }
+          return bits.join("/");
+        }
+        function previewHTML(instrument = true) {
+          let htmlName =
+            language(active) === "markup" && files[active] !== undefined
+              ? active
+              : files["index.html"] !== undefined
+                ? "index.html"
+                : Object.keys(files).find((n) => /\.html?$/.test(n));
+          if (!htmlName) {
+            if (language(active) === "markdown")
+              return `<body style="font:16px/1.8 system-ui;padding:35px;white-space:pre-wrap">${escapeHTML(files[active] || "")}</body>`;
+            return '<body style="font:14px/1.8 system-ui;background:#f6f5f1;padding:40px;color:#555">This language has syntax highlighting.<br>Create an HTML file to see a live browser preview.</body>';
+          }
+          $("#preview-file").textContent = htmlName;
+          const doc = new DOMParser().parseFromString(files[htmlName], "text/html");
+          doc.querySelectorAll("link[rel=stylesheet]").forEach((link) => {
+            const path = resolveFile(link.getAttribute("href") || "", htmlName);
+            if (path && files[path] !== undefined) {
+              const s = doc.createElement("style");
+              s.textContent = files[path].replace(/<\/style/gi, "<\\/style");
+              link.replaceWith(s);
+            }
+          });
+          doc.querySelectorAll("script[src]").forEach((script) => {
+            const path = resolveFile(script.getAttribute("src") || "", htmlName);
+            if (path && files[path] !== undefined) {
+              script.removeAttribute("src");
+              script.textContent = files[path].replace(/<\/script/gi, "<\\/script");
+            }
+          });
+          if (language(active) === "css" && !doc.querySelector("style")) {
+            const s = doc.createElement("style");
+            s.textContent = files[active];
+            doc.head.append(s);
+          }
+          if (instrument) {
+            const bridge = doc.createElement("script");
+            bridge.textContent = `(${previewBridge.toString()})(${JSON.stringify(inspectMode)});`;
+            doc.head.prepend(bridge);
+          }
+          return "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+        }
+        function previewBridge(inspecting) {
+          const send = (type, payload) =>
+            parent.postMessage({ source: "cobalt-preview", type, ...payload }, "*");
+          ["log", "info", "warn", "error"].forEach((method) => {
+            const original = console[method];
+            console[method] = (...args) => {
+              original.apply(console, args);
+              send("console", {
+                level: method,
+                text: args
+                  .map((v) => {
+                    try {
+                      return typeof v === "object" ? JSON.stringify(v) : String(v);
+                    } catch {
+                      return String(v);
+                    }
+                  })
+                  .join(" "),
+              });
+            };
+          });
+          addEventListener("error", (e) =>
+            send("console", {
+              level: "error",
+              text:
+                e.message +
+                (e.lineno ? " (line " + e.lineno + ")" : "") +
+                " — Check the referenced variable, syntax, or file path.",
+            }),
+          );
+          addEventListener("unhandledrejection", (e) =>
+            send("console", {
+              level: "error",
+              text: String(e.reason) + " — Handle this promise with .catch() or try/catch.",
+            }),
+          );
+          let selected, previousOutline;
+          function path(el) {
+            const bits = [];
+            while (el && el !== document.documentElement) {
+              let i = 1,
+                s = el;
+              while ((s = s.previousElementSibling)) if (s.tagName === el.tagName) i++;
+              bits.unshift(el.tagName.toLowerCase() + ":nth-of-type(" + i + ")");
+              el = el.parentElement;
+            }
+            return "html > " + bits.join(" > ");
+          }
+          if (inspecting) {
+            addEventListener(
+              "mouseover",
+              (e) => {
+                if (selected) selected.style.outline = previousOutline;
+                selected = e.target;
+                previousOutline = selected.style.outline;
+                selected.style.outline = "2px solid #a18dd2";
+              },
+              true,
+            );
+            addEventListener(
+              "click",
+              (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const el = e.target;
+                send("select", {
+                  selector: path(el),
+                  tag: el.tagName.toLowerCase(),
+                  text: el.children.length ? "" : el.textContent,
+                  src: el.getAttribute("src") || "",
+                  color: getComputedStyle(el).color,
+                  background: getComputedStyle(el).backgroundColor,
+                  fontSize: getComputedStyle(el).fontSize,
+                  borderRadius: getComputedStyle(el).borderRadius,
+                });
+              },
+              true,
+            );
+          }
+        }
+        function run(manual = false) {
+          frame.srcdoc = previewHTML();
+          if (manual) {
+            stats.runs++;
+            log("Preview updated. Your latest changes are live.");
+            toast("Fresh code, fresh preview.");
+            persist();
+          }
+          setTimeout(updateDimensions, 150);
+        }
+        function updateDimensions() {
+          $("#preview-dimensions").textContent =
+            `${Math.round(frame.getBoundingClientRect().width)} × ${Math.round(frame.getBoundingClientRect().height)}`;
+        }
+        window.addEventListener("message", (e) => {
+          if (e.source !== frame.contentWindow || e.data?.source !== "cobalt-preview") return;
+          const d = e.data;
+          if (d.type === "console")
+            log(d.text, d.level === "error" ? "error" : d.level === "warn" ? "warn" : "info");
+          if (d.type === "select" && inspectMode) {
+            selectedElement = d;
+            showSidebar();
+            renderInspector();
+          }
+        });
+        window.addEventListener("error", (e) => {
+          if (e.message)
+            log(e.message + " — Check the browser console for the original source.", "error");
+        });
+        window.addEventListener("unhandledrejection", (e) =>
+          log(String(e.reason) + " — A network request or async action may have failed.", "error"),
+        );
+        editor.addEventListener("input", () => {
+          if (!active) return;
+          files[active] = editor.value;
+          stats.edits++;
+          stats.languages[language(active)] = (stats.languages[language(active)] || 0) + 1;
+          $("#editor-save").textContent = "Saving…";
+          highlight();
+          clearTimeout(saveTimer);
+          saveTimer = setTimeout(() => {
+            persist();
+            if (localDirectory) writeLocal(active);
+          }, 400);
+          clearTimeout(previewTimer);
+          if (settings.live) previewTimer = setTimeout(() => run(), 650);
+          clearTimeout(watermarkTimer);
+          watermarkTimer = setTimeout(checkWatermark, 1000);
+        });
+        editor.addEventListener("keydown", (e) => {
+          if (e.key.length === 1) stats.keystrokes++;
+          if (e.key === "Tab") {
+            e.preventDefault();
+            const start = editor.selectionStart,
+              end = editor.selectionEnd;
+            editor.setRangeText("  ", start, end, "end");
+            editor.dispatchEvent(new Event("input"));
+          }
+          if (e.key === "Enter" && !e.metaKey && !e.ctrlKey) {
+            e.preventDefault();
+            const before = editor.value.slice(0, editor.selectionStart),
+              indent = before.split("\n").at(-1).match(/^\s*/)[0];
+            editor.setRangeText("\n" + indent, editor.selectionStart, editor.selectionEnd, "end");
+            editor.dispatchEvent(new Event("input"));
+          }
+        });
+        ["click", "keyup", "select"].forEach((ev) => editor.addEventListener(ev, updateCursor));
+        function setVisibility(id, show) {
+          const el = $(id);
+          el.classList.toggle(
+            "hidden",
+            show === undefined ? !el.classList.contains("hidden") : !show,
+          );
+          if (id === "#preview-panel" || id === "#code-panel") {
+            const both =
+              !$("#preview-panel").classList.contains("hidden") &&
+              !$("#code-panel").classList.contains("hidden");
+            $("#editor-resizer").classList.toggle("hidden", !both);
+            $("#code-panel").style.flex = $("#preview-panel").classList.contains("hidden")
+              ? "1"
+              : "";
+          }
+          requestAnimationFrame(() => {
+            highlight();
+            updateDimensions();
+          });
+        }
+        function showSidebar() {
+          setVisibility("#sidebar", true);
+          if (matchMedia("(max-width:540px)").matches) $("#sidebar").classList.add("mobile-open");
+          $("#sidebar-resizer").classList.remove("hidden");
+        }
+        function selectSection(type) {
+          if (type === "terminal") {
+            setVisibility("#terminal");
+            return;
+          }
+          if (type === "inspect") {
+            toggleInspect();
+            return;
+          }
+          section = type;
+          $$("[data-section]").forEach((b) =>
+            b.classList.toggle("active", b.dataset.section === type),
+          );
+          if (type === "explorer") {
+            closeDocument();
+            showSidebar();
+            renderExplorer();
+          } else openDocument(type);
+        }
+        function newItem(folder = false, parent = "") {
+          modal(
+            `${folder ? "New folder" : "New file"}`,
+            `<p>${folder ? "Give your ideas a little room." : "Start something new. Use an extension to choose the language."}</p><form id="new-item-form"><label class="field">${folder ? "Folder path" : "File name"}<input id="new-name" placeholder="${folder ? "components" : "untitled.html"}" value="${escapeHTML(parent ? parent + "/" : "")}" required autocomplete="off" /></label><div class="modal-footer"><button type="button" class="btn" data-action="close-modal">Cancel</button><button class="btn primary" type="submit">Create ${folder ? "folder" : "file"}</button></div></form>`,
+          );
+          $("#new-item-form").onsubmit = (e) => {
+            e.preventDefault();
+            let n = $("#new-name").value.trim().replace(/\\/g, "/");
+            if (
+              !n ||
+              n.startsWith("/") ||
+              n.split("/").some((p) => !p || p === "." || p === "..") ||
+              /[<>:"|?*\x00-\x1f]/.test(n)
+            ) {
+              toast("Use a valid relative file or folder name.", "triangle-alert");
+              return;
+            }
+            if (files[n] !== undefined || folders.includes(n)) {
+              toast("That name is already in your workspace.", "triangle-alert");
+              return;
+            }
+            if (folder) {
+              folders.push(n);
+              renderExplorer();
+            } else {
+              files[n] = "";
+              openFile(n);
+            }
+            persist();
+            closeModal();
+            toast(`${folder ? "Folder" : "File"} created`);
+          };
+          setTimeout(() => $("#new-name")?.focus(), 60);
+        }
+        function modal(title, body, cls = "") {
+          closeDropdown();
+          $("#overlay-root").innerHTML =
+            `<div class="modal-backdrop"><section class="modal ${cls}" role="dialog" aria-modal="true" aria-label="${escapeHTML(title)}"><div class="modal-head">${icon(title === "Settings" ? "settings-2" : "command")}<h2>${escapeHTML(title)}</h2><button class="icon-btn" data-action="close-modal" title="Close">${icon("x")}</button></div>${body}</section></div>`;
+          setTimeout(() => {
+            const first = $(
+              "input:not([type=checkbox]):not([type=range]):not([type=color])",
+              $("#overlay-root"),
+            );
+            first?.focus();
+          }, 50);
+        }
+        function closeModal() {
+          $("#overlay-root").innerHTML = "";
+          if (snakeTimer) {
+            clearInterval(snakeTimer);
+            snakeTimer = null;
+          }
+        }
+        function confirmAction(title, text, fn) {
+          modal(
+            title,
+            `<p>${escapeHTML(text)}</p><div class="modal-footer"><button class="btn" data-action="close-modal">Cancel</button><button class="btn primary" id="confirm-action">Continue</button></div>`,
+          );
+          $("#confirm-action").onclick = () => {
+            closeModal();
+            fn();
+          };
+        }
+        function closeDropdown() {
+          $("#dropdown-root").innerHTML = "";
+          $$(".menu-trigger").forEach((b) => b.classList.remove("open"));
+        }
+        const menuItems = {
+          File: [
+            ["file-plus-2", "New file", "new-file", "⌘ N"],
+            ["folder-plus", "New folder", "new-folder"],
+            null,
+            ["folder-open", "Open local folder…", "local-folder"],
+            ["save", "Save to local folder", "save-local", "⌘ S"],
+            null,
+            ["file-down", "Download current file", "download"],
+            ["archive", "Download ZIP…", "zip"],
+            ["download", "Download editor HTML", "singlefile"],
+            null,
+            ["rotate-ccw", "Reset starter workspace…", "reset"],
+          ],
+          Edit: [
+            ["undo-2", "Undo", "undo", "⌘ Z"],
+            ["redo-2", "Redo", "redo", "⌘ ⇧ Z"],
+            null,
+            ["search", "Search workspace…", "search", "⌘ K"],
+            ["text-select", "Select all", "select-all", "⌘ A"],
+            ["copy", "Copy current file", "copy-code"],
+            ["remove-formatting", "Format code", "format", "⇧ ⌥ F"],
+            null,
+            ["settings-2", "Settings", "settings"],
+          ],
+          View: [
+            ["panel-left", "Toggle explorer", "toggle-sidebar"],
+            ["panel-left", "Toggle code editor", "toggle-editor"],
+            ["panel-right", "Toggle live preview", "toggle-preview"],
+            ["panel-bottom", "Toggle terminal", "toggle-terminal"],
+            null,
+            ["book-open", "Language manual", "manual"],
+            ["chart-no-axes-combined", "Coding statistics", "stats"],
+            ["layout-template", "Templates", "templates"],
+            ["scan", "Inspect mode", "inspect"],
+            null,
+            ["maximize", "Fullscreen preview", "fullscreen"],
+            ["external-link", "Preview in new tab", "new-tab"],
+          ],
+          Run: [
+            ["play", "Run preview", "run", "⌘ ↵"],
+            ["rotate-cw", "Refresh preview", "refresh"],
+            ["radio-tower", "Toggle auto-run", "auto-run"],
+            null,
+            ["trash-2", "Clear terminal", "clear-console"],
+            ["upload", "Publish share link…", "publish"],
+          ],
+        };
+        function dropdown(items, x, y) {
+          const root = $("#dropdown-root");
+          root.innerHTML = `<div class="dropdown" style="left:${Math.min(x, innerWidth - 235)}px;top:${Math.min(y, innerHeight - 320)}px">${items.map((v) => (v ? `<button data-action="${v[2]}">${icon(v[0])}<span>${v[1]}</span>${v[3] ? `<kbd>${v[3]}</kbd>` : ""}</button>` : "<hr>")).join("")}</div>`;
+          const menu = root.firstElementChild;
+          menu.style.top = Math.max(12, Math.min(y, innerHeight - menu.offsetHeight - 12)) + "px";
+          menu.style.left = Math.max(12, Math.min(x, innerWidth - menu.offsetWidth - 12)) + "px";
+        }
+        document.addEventListener("contextmenu", (e) => {
+          if (e.target.closest("input:not(#code-input),select")) return;
+          e.preventDefault();
+          const row = e.target.closest("[data-file],[data-folder]"),
+            name = row?.dataset.file || row?.dataset.folder || "",
+            isFolder = !!row?.dataset.folder;
+          dropdown(
+            [
+              ["file-plus-2", "New file", "context-new-file"],
+              ["folder-plus", "New folder", "context-new-folder"],
+              ...(name
+                ? [
+                    null,
+                    ["pencil", "Rename…", "context-rename"],
+                    ["trash-2", "Delete…", "context-delete"],
+                  ]
+                : []),
+              null,
+              ["copy", "Copy current code", "copy-code"],
+              ["archive", "Download ZIP…", "zip"],
+            ],
+            e.clientX,
+            e.clientY,
+          );
+          $("#dropdown-root").dataset.context = name;
+          $("#dropdown-root").dataset.folder = isFolder ? "1" : "";
+        });
+        function renameItem(name, isFolder) {
+          modal(
+            "Rename",
+            `<form id="rename-form"><label class="field">New name<input id="rename-name" value="${escapeHTML(name)}" required /></label><div class="modal-footer"><button class="btn primary">Rename</button></div></form>`,
+          );
+          $("#rename-form").onsubmit = (e) => {
+            e.preventDefault();
+            const next = $("#rename-name").value.trim();
+            if (!next || next === name) {
+              closeModal();
+              return;
+            }
+            if (
+              next.startsWith("/") ||
+              next.split("/").some((p) => !p || p === "." || p === "..") ||
+              /[<>:"|?*\\]/.test(next) ||
+              files[next] !== undefined ||
+              folders.includes(next)
+            ) {
+              toast("Use a unique, valid relative path.", "triangle-alert");
+              return;
+            }
+            const rename = (n) =>
+              n === name || (isFolder && n.startsWith(name + "/"))
+                ? next + n.slice(name.length)
+                : n;
+            files = Object.fromEntries(Object.entries(files).map(([n, v]) => [rename(n), v]));
+            folders = folders.map(rename);
+            tabs = tabs.map(rename);
+            active = active ? rename(active) : active;
+            persist();
+            renderExplorer();
+            renderTabs();
+            closeModal();
+            toast("Renamed");
+          };
+        }
+        function deleteItem(name, isFolder) {
+          confirmAction(
+            "Delete " + name + "?",
+            isFolder
+              ? "This removes the folder and every file inside it from your browser workspace."
+              : "This removes the file from your browser workspace.",
+            () => {
+              for (const n of Object.keys(files))
+                if (n === name || (isFolder && n.startsWith(name + "/"))) {
+                  delete files[n];
+                  tabs = tabs.filter((t) => t !== n);
+                }
+              folders = folders.filter(
+                (n) => n !== name && !(isFolder && n.startsWith(name + "/")),
+              );
+              if (files[active] === undefined) {
+                active = tabs[0] || Object.keys(files)[0] || null;
+                active ? openFile(active) : showEmpty();
+              }
+              renderExplorer();
+              renderTabs();
+              persist();
+              run();
+            },
+          );
+        }
+        function showSearch() {
+          modal(
+            "Find your next thought",
+            `<div class="search-box">${icon("search")}<input id="global-search" placeholder="Search files, code, or commands..." autocomplete="off" /><kbd>ESC</kbd></div><div id="search-results"></div>`,
+          );
+          function results() {
+            const q = $("#global-search").value.toLowerCase(),
+              matches = Object.keys(files).filter(
+                (n) => n.toLowerCase().includes(q) || files[n].toLowerCase().includes(q),
+              );
+            $("#search-results").innerHTML =
+              matches
+                .map(
+                  (n) =>
+                    `<button class="search-result" data-search-file="${escapeHTML(n)}" style="width:100%">${fileIcon(n)}${escapeHTML(n)}<span class="muted">${langNames[language(n)]}</span></button>`,
+                )
+                .join("") +
+                Object.entries(menuItems)
+                  .flatMap(([, items]) => items.filter(Boolean))
+                  .filter(
+                    (v, i, arr) =>
+                      arr.findIndex((a) => a[2] === v[2]) === i && v[1].toLowerCase().includes(q),
+                  )
+                  .slice(0, 6)
+                  .map(
+                    (v) =>
+                      `<button class="search-result" style="width:100%" data-search-action="${v[2]}">${icon(v[0])}${v[1]}<span class="muted">Command</span></button>`,
+                  )
+                  .join("") || '<p style="padding:12px">No matches. A new idea, perhaps?</p>';
+          }
+          $("#global-search").oninput = results;
+          results();
+        }
+        function renderManual() {
+          const lang = language(active),
+            name = langNames[lang] || "Text";
+          const manuals = {
+            markup: [
+              [
+                "Structure",
+                "<!DOCTYPE>, <html>, <head>, <body>",
+                "Define the document and its metadata.",
+              ],
+              [
+                "Text",
+                "<h1>…<h6>, <p>, <span>, <strong>, <em>",
+                "Headings, paragraphs, inline text and emphasis.",
+              ],
+              ["Links", '<a href="…">', "Link to a URL or an in-page anchor."],
+              [
+                "Media",
+                "<img>, <video>, <audio>, <picture>, <svg>",
+                "Include images, sound, video, or vector graphics. Always add image alt text.",
+              ],
+              [
+                "Layout",
+                "<header>, <nav>, <main>, <section>, <article>, <aside>, <footer>, <div>",
+                "Create a semantic, accessible page structure.",
+              ],
+              [
+                "Lists",
+                "<ul>, <ol>, <li>, <dl>, <dt>, <dd>",
+                "Group items, steps, terms and descriptions.",
+              ],
+              [
+                "Forms",
+                "<form>, <input>, <label>, <button>, <select>, <option>, <textarea>",
+                "Collect input. Pair controls with descriptive labels.",
+              ],
+              [
+                "Tables",
+                "<table>, <thead>, <tbody>, <tr>, <th>, <td>",
+                "Represent tabular data with clear headers.",
+              ],
+              [
+                "Interactive",
+                "<details>, <summary>, <dialog>",
+                "Disclosure widgets and native modal dialogs.",
+              ],
+              [
+                "Resources",
+                "<link>, <style>, <script>, <meta>, <title>",
+                "Load styles, behavior, fonts, and metadata.",
+              ],
+              [
+                "Formatting",
+                "<b>, <i>, <u>, <s>, <small>, <mark>, <sub>, <sup>",
+                "Add typographic emphasis or annotate text. Prefer semantic tags when possible.",
+              ],
+              [
+                "Quotations",
+                "<blockquote>, <q>, <cite>, <abbr>, <dfn>, <address>",
+                "Mark quotations, citations, definitions, and contact information.",
+              ],
+              [
+                "Code",
+                "<pre>, <code>, <kbd>, <samp>, <var>",
+                "Represent source code, keyboard input, program output, and variables.",
+              ],
+              [
+                "Text detail",
+                "<br>, <wbr>, <hr>, <time>, <data>, <bdi>, <bdo>",
+                "Break lines, show dates, isolate text direction, and attach machine-readable values.",
+              ],
+              [
+                "Figures",
+                "<figure>, <figcaption>",
+                "Keep an illustration and its caption together.",
+              ],
+              [
+                "Form detail",
+                "<fieldset>, <legend>, <datalist>, <optgroup>, <output>, <progress>, <meter>",
+                "Group inputs, provide choices, and display calculated values or progress.",
+              ],
+              [
+                "Table detail",
+                "<caption>, <colgroup>, <col>, <tfoot>",
+                "Label tables and describe columns and summary rows.",
+              ],
+              [
+                "Embedding",
+                "<iframe>, <object>, <embed>, <canvas>, <source>, <track>",
+                "Embed documents, draw graphics, and add alternative media sources or captions.",
+              ],
+              [
+                "Components",
+                "<template>, <slot>, <noscript>, <base>",
+                "Define reusable fragments, web-component slots, and document-level fallbacks.",
+              ],
+              [
+                "Annotations",
+                "<ruby>, <rt>, <rp>, <ins>, <del>",
+                "Annotate pronunciation or mark inserted and deleted content.",
+              ],
+            ],
+            css: [
+              [
+                "Selectors",
+                "element, .class, #id, [attr]",
+                "Choose the elements your rule applies to.",
+              ],
+              [
+                "Layout",
+                "display: flex | grid",
+                "Build flexible rows, columns, and two-dimensional layouts.",
+              ],
+              ["Space", "margin, padding, gap", "Control spacing around and inside elements."],
+              [
+                "Sizing",
+                "width, max-width, min-height",
+                "Use rem, %, clamp(), and viewport units.",
+              ],
+              ["Type", "font-family, font-size, line-height", "Set a readable type system."],
+              [
+                "Color",
+                "color, background, opacity",
+                "Set foreground, background and transparency.",
+              ],
+              [
+                "Motion",
+                "transition, animation, @keyframes",
+                "Animate transform and opacity for smoother performance.",
+              ],
+              ["Responsive", "@media (max-width: 768px)", "Adapt layouts to narrower screens."],
+              ["Variables", "--accent: #cec7f1; var(--accent)", "Share reusable design values."],
+            ],
+            javascript: [
+              [
+                "Variables",
+                "const name = value; let count = 0;",
+                "Use const by default; let when a value changes.",
+              ],
+              [
+                "Functions",
+                "function greet(name) { return name; }",
+                "Package reusable behavior. Arrow functions: x => x * 2.",
+              ],
+              [
+                "DOM",
+                'document.querySelector("p")',
+                "Find a node; edit textContent, style, or classList.",
+              ],
+              ["Events", 'el.addEventListener("click", fn)', "Respond to user interactions."],
+              [
+                "Arrays",
+                "map(), filter(), reduce(), find()",
+                "Transform, select, aggregate and search lists.",
+              ],
+              ["Async", "async / await / fetch()", "Wait for remote data; catch network failures."],
+              [
+                "Debug",
+                "console.log(value); try {} catch (e) {}",
+                "Inspect values and handle errors in the beta terminal.",
+              ],
+              ["Modules", "export / import", "Use modules for larger projects."],
+            ],
+            python: [
+              ["Variables", 'name = "cobalt"', "Python infers types; use snake_case for names."],
+              ["Output", 'print("hello")', "Write a value to standard output."],
+              ["Functions", "def greet(name):", "Indent the function body by four spaces."],
+              ["Loops", "for item in items:", "Iterate lists, strings and ranges."],
+              ["Conditions", "if / elif / else", "Branch based on a boolean expression."],
+              ["Collections", "list, dict, set, tuple", "Choose a structure that fits your data."],
+              ["Errors", "try: / except ValueError:", "Catch specific exceptions."],
+              [
+                "Packages",
+                "import math; from pathlib import Path",
+                "Reuse standard library functionality.",
+              ],
+            ],
+            json: [
+              [
+                "Objects",
+                '{"name": "cobalt", "version": 1}',
+                "Keys must be double-quoted strings. No comments or trailing commas.",
+              ],
+              ["Arrays", '["html", "css", "javascript"]', "Store an ordered list of values."],
+              [
+                "Values",
+                "string, number, true, false, null",
+                "Only JSON data types are allowed; no functions or undefined.",
+              ],
+              [
+                "Validate",
+                "JSON.parse(text)",
+                "Parse with JavaScript to detect invalid JSON. Format from the Edit menu.",
+              ],
+            ],
+            markdown: [
+              [
+                "Headings",
+                "# Title / ## Section / ### Subsection",
+                "Use one main heading and a logical hierarchy.",
+              ],
+              ["Text", "**bold**, *italic*, ~~deleted~~", "Add emphasis without writing HTML."],
+              [
+                "Links",
+                "[label](https://example.com)",
+                "Use descriptive labels. Images use ![alt](image-url).",
+              ],
+              [
+                "Lists",
+                "- item / 1. item / - [ ] task",
+                "Create unordered, ordered, and task lists.",
+              ],
+              [
+                "Code",
+                "`inline code` or fenced blocks with ```",
+                "Add a language after the opening fence for highlighting in compatible renderers.",
+              ],
+            ],
+            typescript: [
+              [
+                "Types",
+                "const name: string = 'cobalt';",
+                "Annotate values when inference is not enough.",
+              ],
+              [
+                "Interfaces",
+                "interface User { name: string; id: number }",
+                "Describe object shapes and reusable contracts.",
+              ],
+              ["Unions", "type Status = 'idle' | 'ready';", "Model a closed set of valid states."],
+              [
+                "Generics",
+                "function first<T>(items: T[]): T | undefined",
+                "Reuse logic while preserving input and output types.",
+              ],
+              [
+                "Safety",
+                "unknown, optional chaining, type guards",
+                "Narrow uncertain values before accessing properties. TypeScript needs compilation to execute.",
+              ],
+            ],
+            sql: [
+              [
+                "Query",
+                "SELECT name FROM users WHERE active = 1;",
+                "Select only the columns you need. Filter with WHERE.",
+              ],
+              [
+                "Order",
+                "ORDER BY created_at DESC LIMIT 10",
+                "Sort results and constrain the number of returned rows.",
+              ],
+              [
+                "Relate",
+                "JOIN orders ON orders.user_id = users.id",
+                "Connect tables through matching key columns.",
+              ],
+              [
+                "Aggregate",
+                "COUNT(*), SUM(amount), GROUP BY",
+                "Summarize rows and filter aggregates with HAVING.",
+              ],
+              [
+                "Write",
+                "INSERT INTO / UPDATE ... SET / DELETE FROM",
+                "Use transactions, parameters, and a careful WHERE clause for changes.",
+              ],
+            ],
+            rust: [
+              [
+                "Bindings",
+                'let name = "cobalt"; let mut count = 0;',
+                "Bindings are immutable unless declared mut.",
+              ],
+              [
+                "Functions",
+                "fn greet(name: &str) -> String { ... }",
+                "Declare types and return the last expression without a semicolon.",
+              ],
+              [
+                "Ownership",
+                "&value / &mut value",
+                "Borrow values instead of moving them when appropriate.",
+              ],
+              [
+                "Match",
+                "match result { Ok(v) => v, Err(e) => ... }",
+                "Handle every variant explicitly.",
+              ],
+              [
+                "Project",
+                "cargo new / cargo run / cargo test",
+                "Use Cargo in a local terminal to build and test.",
+              ],
+            ],
+            go: [
+              [
+                "Package",
+                "package main",
+                "Executable programs start in a main package with func main().",
+              ],
+              [
+                "Variables",
+                'name := "cobalt"',
+                "Short declarations infer a type inside functions.",
+              ],
+              [
+                "Functions",
+                "func greet(name string) string { return name }",
+                "Types follow parameter names. Functions can return multiple values.",
+              ],
+              [
+                "Errors",
+                "if err != nil { return err }",
+                "Check errors explicitly after operations that can fail.",
+              ],
+              [
+                "Collections",
+                "[]string / map[string]int",
+                "Use slices for growing lists and maps for keyed data.",
+              ],
+            ],
+            java: [
+              [
+                "Entry point",
+                "public static void main(String[] args)",
+                "Put the entry point inside a class matching the file name.",
+              ],
+              [
+                "Types",
+                "String name; int count; boolean ready;",
+                "Declare a type for each variable.",
+              ],
+              [
+                "Classes",
+                "class User { private String name; }",
+                "Encapsulate data and behavior behind a public interface.",
+              ],
+              [
+                "Collections",
+                "List<String> names = new ArrayList<>();",
+                "Use generic collections rather than raw types.",
+              ],
+              [
+                "Errors",
+                "try { ... } catch (Exception e) { ... }",
+                "Handle specific exceptions and close resources with try-with-resources.",
+              ],
+            ],
+            cpp: [
+              [
+                "Entry point",
+                "#include <iostream>\nint main() { return 0; }",
+                "Include the standard headers your code uses.",
+              ],
+              [
+                "Output",
+                'std::cout << "cobalt" << std::endl;',
+                "Write to the standard output stream.",
+              ],
+              [
+                "Types",
+                "auto count = 0; const std::string name;",
+                "Use const for immutable values and auto when the type is clear.",
+              ],
+              [
+                "Collections",
+                "std::vector<int>, std::map<Key, Value>",
+                "Prefer standard-library containers to manual allocation.",
+              ],
+              [
+                "Lifetime",
+                "std::unique_ptr<T>, RAII",
+                "Tie resource ownership to object lifetime.",
+              ],
+            ],
+            c: [
+              [
+                "Entry point",
+                "#include <stdio.h>\nint main(void) { return 0; }",
+                "Declare the program entry point and include required headers.",
+              ],
+              ["Output", 'printf("hello\\n");', "Match format specifiers to the argument types."],
+              [
+                "Functions",
+                "int add(int a, int b) { return a + b; }",
+                "Declare function signatures before calling them.",
+              ],
+              [
+                "Memory",
+                "malloc(), calloc(), realloc(), free()",
+                "Check allocations, track ownership, and free allocated memory.",
+              ],
+              [
+                "Safety",
+                "sizeof, bounds checks, const",
+                "Never read beyond array bounds or dereference invalid pointers.",
+              ],
+            ],
+            php: [
+              ["Start", "<?php", "PHP code runs on a PHP server, not in a browser iframe."],
+              ["Variables", '$name = "cobalt";', "Variable names begin with a dollar sign."],
+              [
+                "Output",
+                "echo htmlspecialchars($name);",
+                "Escape untrusted output before putting it in HTML.",
+              ],
+              [
+                "Arrays",
+                "['name' => 'cobalt', 'ready' => true]",
+                "Use associative arrays for keyed values.",
+              ],
+              [
+                "Functions",
+                "function greet(string $name): string { ... }",
+                "Add parameter and return types for clearer contracts.",
+              ],
+            ],
+            ruby: [
+              ["Variables", 'name = "cobalt"', "Use snake_case for variables and methods."],
+              [
+                "Methods",
+                "def greet(name)\n  name\nend",
+                "The last expression is returned automatically.",
+              ],
+              [
+                "Blocks",
+                "items.each { |item| puts item }",
+                "Pass behavior to collection methods with blocks.",
+              ],
+              [
+                "Hashes",
+                "{ name: 'cobalt', ready: true }",
+                "Symbols are a common choice for hash keys.",
+              ],
+              [
+                "Errors",
+                "begin / rescue StandardError / end",
+                "Catch specific errors and use ensure for cleanup.",
+              ],
+            ],
+            bash: [
+              [
+                "Variables",
+                'name="cobalt"; echo "$name"',
+                "No spaces around assignment. Quote expansions.",
+              ],
+              [
+                "Arguments",
+                '"$1", "$@", "$?"',
+                "Access arguments safely and check command exit status.",
+              ],
+              [
+                "Conditions",
+                'if [ -f "$file" ]; then ...; fi',
+                "Use tests to check paths and values before operating on them.",
+              ],
+              [
+                "Loops",
+                "for file in *.html; do ...; done",
+                "Iterate over paths without splitting on spaces.",
+              ],
+              [
+                "Safety",
+                "set -euo pipefail",
+                "Consider strict error handling and review destructive commands before running them locally.",
+              ],
+            ],
+            yaml: [
+              [
+                "Mappings",
+                "name: cobalt\nversion: 1",
+                "Use consistent space indentation; tabs are not allowed.",
+              ],
+              ["Lists", "languages:\n  - html\n  - css", "Prefix list items with a dash."],
+              [
+                "Strings",
+                'message: "hello: world"',
+                "Quote strings containing punctuation that could be interpreted as syntax.",
+              ],
+              [
+                "Multiline",
+                "description: |\n  A little idea.\n  A big possibility.",
+                "Use | to preserve newlines or > to fold them.",
+              ],
+              ["Comments", "# A little note", "Comments begin with a hash outside quoted strings."],
+            ],
+            toml: [
+              [
+                "Values",
+                'name = "cobalt"\nversion = 1',
+                "Use key-value pairs with explicit strings and native number types.",
+              ],
+              ["Tables", "[editor]\nfont_size = 13", "Group configuration under a table heading."],
+              ["Arrays", 'languages = ["html", "css"]', "Separate values with commas."],
+              [
+                "Table arrays",
+                '[[files]]\nname = "index.html"',
+                "Use double brackets to append entries to an array of tables.",
+              ],
+            ],
+            scss: [
+              ["Variables", "$accent: #cec7f1;", "Define compile-time style values."],
+              [
+                "Nesting",
+                ".card { &:hover { opacity: .9; } }",
+                "Keep nesting shallow to avoid overly specific selectors.",
+              ],
+              [
+                "Mixins",
+                "@mixin center { display: grid; place-items: center; }",
+                "Reuse blocks with @include center.",
+              ],
+              ["Modules", "@use 'tokens';", "Share styles through namespaced Sass modules."],
+              [
+                "Build",
+                "sass input.scss output.css",
+                "Compile SCSS locally, then reference the generated CSS in your HTML.",
+              ],
+            ],
+          };
+          const entries = manuals[lang] ||
+            (lang === "typescript" || lang === "jsx" || lang === "tsx"
+              ? manuals.javascript
+              : null) || [
+              [
+                "Start here",
+                "Comments & declarations",
+                "Use the language’s native declaration and comment syntax.",
+              ],
+              [
+                "Structure",
+                "Functions, classes and modules",
+                "Keep each unit focused on one purpose.",
+              ],
+              [
+                "Control flow",
+                "Conditions and loops",
+                "Express branches clearly and avoid deep nesting.",
+              ],
+              ["Data", "Strings, numbers, collections", "Choose types that represent the problem."],
+              ["Errors", "Exceptions and validation", "Handle invalid input at the boundary."],
+              [
+                "Workflow",
+                "Save, download, run locally",
+                "This editor highlights your code; use your language runtime to execute it.",
+              ],
+            ];
+          $("#document").innerHTML =
+            `<span class="eyebrow">A LITTLE GUIDANCE</span><h1>${name}, at your fingertips.</h1><p>A quick reference for the language in <code>${escapeHTML(active || "your file")}</code>.<br>No suggestions in your way. Just a hand when you need one.</p><table class="manual-table"><thead><tr><th>CONCEPT</th><th>REFERENCE</th></tr></thead><tbody>${entries.map(([label, code, tip]) => `<tr><td>${label}</td><td><code>${escapeHTML(code)}</code><br>${tip}</td></tr>`).join("")}</tbody></table><div class="tip-box">${icon("lightbulb", "sm")} ${["markup", "css", "javascript"].includes(lang) ? "Keep styles in styles.css and behavior in script.js. Local stylesheet and script references are bundled into your live preview." : "Syntax highlighting is supported. Execution requires a compatible external runtime; it does not run in this browser."}</div><h2>A few things worth remembering</h2><p>Press <code>Tab</code> to indent, <code>⌘ / Ctrl + Enter</code> to run, and <code>⌘ / Ctrl + K</code> to search. All your work is saved in this browser. Export a ZIP for a backup.</p>`;
+        }
+        function renderStats() {
+          const entries = Object.entries(stats.languages).sort((a, b) => b[1] - a[1]),
+            total = entries.reduce((n, [, v]) => n + v, 0);
+          $("#document").innerHTML =
+            `<span class="eyebrow">LITTLE STEPS, BIG IDEAS</span><h1>Look at you, building things.</h1><p>Your coding journey, measured locally. No tracking. Just you.</p><div class="stat-cards">${[
+              [Math.floor(stats.seconds / 60) + "m", "Time in the editor"],
+              [stats.keystrokes.toLocaleString(), "Characters typed"],
+              [Object.keys(files).length, "Files in this workspace"],
+              [Object.values(files).reduce((s, c) => s + c.split("\n").length, 0), "Lines of code"],
+              [stats.edits.toLocaleString(), "Edits made"],
+              [stats.runs, "Preview runs"],
+              [new Blob(Object.values(files)).size.toLocaleString() + " B", "Workspace size"],
+              [entries.length, "Languages explored"],
+            ]
+              .map(([v, n]) => `<div class="stat-card"><b>${v}</b><span>${n}</span></div>`)
+              .join(
+                "",
+              )}</div><h2>Your most-used languages</h2>${entries.length ? entries.map(([l, n]) => `<div class="row" style="font-size:10px"><span>${langNames[l] || l}</span><span class="spacer"></span><span class="muted">${Math.round((n / total) * 100)}% · ${n} edits</span></div><div class="language-bar"><i style="width:${Math.max(2, (n / total) * 100)}%"></i></div>`).join("") : "<p>Make your first edit to start your language breakdown.</p>"}<div class="tip-box">Statistics are stored only in this browser and never sent anywhere.</div>`;
+        }
+        const models = [
+          "Claude Opus 5.5",
+          "Deepseek V4.1 Flash",
+          "GPT-6 Luna",
+          "Claude Fable 5.2",
+          "GPT-6 Astra",
+          "GPT-6.1 Sol",
+        ];
+        let model = models[0];
+        const modelLogo = (n) =>
+          `<img class="model-logo" alt="" src="https://cdn.jsdelivr.net/npm/@lobehub/icons-static-svg@latest/icons/${n.startsWith("Claude") ? "anthropic" : n.startsWith("Deepseek") ? "deepseek" : "openai"}.svg">`;
+        function renderAI() {
+          $("#document").innerHTML =
+            `<div class="ai-mark">${icon("sparkles")}</div><h1>What should we build today?</h1><div class="ai-prompt"><textarea disabled placeholder="An idea worth bringing to life..." aria-label="AI prompt, under development"></textarea><div class="row"><span class="pill" style="font-size:7px">COMING SOON</span><button class="model-btn" id="model-selector">${modelLogo(model)}${model}${icon("chevron-down", "sm")}</button><button class="submit-ai" disabled title="AI is still under development">${icon("arrow-up")}</button></div></div><p>A little more time in the workshop.<br>This feature is still under development. Models shown are conceptual.</p>`;
+          $("#model-selector").onclick = (e) => {
+            const b = e.currentTarget.getBoundingClientRect();
+            $("#dropdown-root").innerHTML =
+              `<div class="dropdown" style="left:${Math.min(b.left, innerWidth - 230)}px;top:${Math.max(20, b.top - 260)}px">${models.map((n) => `<button data-model="${n}">${modelLogo(n)}${n}${n === model ? icon("check", "sm") : ""}</button>`).join("")}</div>`;
+          };
+        }
+        async function renderTemplates() {
+          $("#document").innerHTML =
+            `<span class="eyebrow">SKIP THE BLANK PAGE</span><h1>A head start, on us.</h1><p>Little starting points for something bigger.</p><div id="template-list"><p>Loading the community collection...</p></div>`;
+          const fallback = () => {
+            if (!$("#template-list")) return;
+            $("#template-list").innerHTML =
+              `<div class="template-card">${icon("code-xml", "lg")}<h3>The simple start</h3><p>A clean HTML, CSS and JavaScript starter. Small on purpose. Yours to make bigger.</p><button class="btn" data-action="starter-template">${icon("plus", "sm")} Add to workspace</button></div><div class="template-card">${icon("layout-panel-top", "lg")}<h3>A personal little page</h3><p>A responsive profile with a name, a short introduction, and a place for your links.</p><button class="btn" data-action="profile-template">${icon("plus", "sm")} Use template</button></div><p style="font-size:9px">The remote collection is empty or unavailable. Local starters are ready to use.</p>`;
+          };
+          try {
+            const res = await fetch(
+              "https://raw.githubusercontent.com/dirextory/b/refs/heads/main/templates.json",
+            );
+            if (!res.ok) throw Error("Collection unavailable");
+            const data = await res.json();
+            if (!Array.isArray(data) || !data.length) {
+              fallback();
+              return;
+            }
+            if (!$("#template-list")) return;
+            $("#template-list").innerHTML = data
+              .map((item) => {
+                const n =
+                  typeof item === "string"
+                    ? item
+                    : item.name || item.title || item.suggestion || "";
+                return `<div class="template-card">${icon("file-code-2", "lg")}<h3>${escapeHTML(n)}</h3><p>${escapeHTML(typeof item === "object" ? item.description || "A community starting point." : "A community starting point.")}</p><button class="btn" data-remote-template="${escapeHTML(n)}">Use template ${icon("arrow-up-right", "sm")}</button></div>`;
+              })
+              .join("");
+          } catch {
+            fallback();
+          }
+        }
+        async function useRemoteTemplate(name) {
+          try {
+            if (!/^[\w -]+(?:\.html)?$/.test(name)) throw Error("Invalid template name");
+            toast("Fetching your template…", "loader");
+            const n = name.replace(/\.html$/, "");
+            const r = await fetch(
+              `https://raw.githubusercontent.com/dirextory/b/refs/heads/main/${encodeURIComponent(n)}.html`,
+            );
+            if (!r.ok) throw Error("Template file not found");
+            const html = await r.text();
+            let path = n + ".html";
+            if (files[path] !== undefined) path = n + "-" + Date.now() + ".html";
+            files[path] = html;
+            openFile(path);
+            run();
+            checkWatermark();
+            toast("Template added");
+          } catch (e) {
+            toast(e.message, "triangle-alert");
+          }
+        }
+        function showSettings(tab = settingsTab) {
+          settingsTab = tab;
+          modal(
+            "Settings",
+            `<div class="settings-tabs">${["Appearance", "Editor", "Workspace"].map((n) => `<button class="${n === tab ? "active" : ""}" data-settings-tab="${n}">${n}</button>`).join("")}</div><div id="settings-content"></div><div class="settings-bottom"><button class="icon-btn" data-action="snake" title="A little break?">${icon("gamepad-2", "sm")}</button><span>Made for making things. And the occasional little break.</span><div class="spacer"></div><span>cobalt+ v1.0</span></div>`,
+            "settings-modal",
+          );
+          const toggle = (key, title, desc) =>
+            `<div class="setting-row"><div><strong>${title}</strong><p>${desc}</p></div><label class="toggle"><input type="checkbox" data-setting="${key}" ${settings[key] ? "checked" : ""} aria-label="${title}"><span></span></label></div>`;
+          if (tab === "Appearance")
+            $("#settings-content").innerHTML =
+              `<div class="setting-section" style="margin-top:18px">Your kind of atmosphere</div><div class="theme-grid">${Object.entries(
+                themes,
+              )
+                .filter(([n]) => n !== "Custom")
+                .map(
+                  ([n, t]) =>
+                    `<button class="theme-swatch ${settings.theme === n ? "selected" : ""}" data-theme="${n}"><div class="theme-colors" style="background:${t.bg}"><i style="background:${t.panel}"></i><i style="background:${t.accent}"></i><i style="background:${t.muted}"></i></div><small>${n}</small></button>`,
+                )
+                .join(
+                  "",
+                )}</div><div class="setting-row"><div><strong>Make it yours</strong><p>Your own accent and editor background.</p></div><div class="row"><input type="color" data-setting="accent" value="${settings.accent}" title="Accent color" style="width:34px;height:30px;padding:3px"><input type="color" data-setting="editor" value="${settings.editor}" title="Editor background" style="width:34px;height:30px;padding:3px"></div></div><div class="setting-section">Wallpaper <span style="font-size:8px;letter-spacing:0;text-transform:none;font-weight:400"> · subtle, just like it should be</span></div><div class="wallpaper-grid">${wallpapers.map((w, i) => `<button title="${w.name}" class="wallpaper ${settings.wallpaper === i ? "selected" : ""}" data-wallpaper="${i}" style="background:${w.bg}"><span>${w.name}</span></button>`).join("")}</div><div class="setting-row"><div><strong>A little movement</strong><p>Animated wallpapers. Quietly doing their thing.</p></div><select data-setting="animation" aria-label="Wallpaper animation">${["None", "Particles", "Leaves", "Snow", "Rain", "Stripes"].map((n) => `<option ${settings.animation === n ? "selected" : ""}>${n}</option>`).join("")}</select></div>${toggle("motion", "Smooth animations", "Soft transitions, a little more fluidity.")}`;
+          if (tab === "Editor")
+            $("#settings-content").innerHTML =
+              `<div class="setting-row"><div><strong>Font size</strong><p>A little bigger, a little smaller. Your call.</p></div><div class="row"><input type="range" min="10" max="22" value="${settings.fontSize}" data-setting="fontSize" aria-label="Font size"><span id="font-size-value" class="mono muted">${settings.fontSize}px</span></div></div><div class="setting-row"><div><strong>Line height</strong><p>Give your code room to breathe.</p></div><input type="range" min="20" max="38" value="${settings.lineHeight}" data-setting="lineHeight" aria-label="Line height"></div>${toggle("ligatures", "Font ligatures", "Let a few characters look good together.")}${toggle("live", "Live preview", "See changes automatically as you type.")}<div class="tip-box">JetBrains Mono powers your editor. Vibrant syntax highlighting works across 20+ languages. No intrusive autocomplete, by design.</div>`;
+          if (tab === "Workspace")
+            $("#settings-content").innerHTML =
+              `<div class="setting-row"><div><strong>Use a folder on your computer</strong><p>Choose a folder to read and save real files. Requires a supported Chromium browser and your permission.</p></div><label class="toggle"><input type="checkbox" id="local-folder-toggle" ${localDirectory ? "checked" : ""} aria-label="Use local folder"><span></span></label></div><div class="setting-row"><div><strong>Local-first, always</strong><p>Your workspace and preferences are saved to this browser, not an account. Export a ZIP for safekeeping.</p></div><button class="btn" data-action="zip">Export ZIP</button></div><div class="setting-row"><div><strong>Watermark detection</strong><p>Ask before removing lines containing htmlhost.ai from your files. The editor never alters its own application source.</p></div><button class="btn" data-action="reset-watermark">Re-enable prompts</button></div><div class="setting-row"><div><strong>Your name</strong><p>A little more personal.</p></div><input id="profile-name" aria-label="Your name" value="${escapeHTML(profile.name)}" placeholder="your first name…" style="width:150px;font-size:11px"></div>`;
+        }
+        async function chooseLocalFolder() {
+          if (!("showDirectoryPicker" in window)) {
+            toast(
+              "Folder access needs a Chromium browser. ZIP export works everywhere.",
+              "triangle-alert",
+            );
+            return;
+          }
+          try {
+            const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+            const loaded = {},
+              dirs = [];
+            let count = 0;
+            async function read(dir, path = "") {
+              for await (const [name, entry] of dir.entries()) {
+                if (name.startsWith(".") || ["node_modules", "dist"].includes(name)) continue;
+                const full = path + name;
+                if (entry.kind === "directory") {
+                  if (dirs.length < 100) {
+                    dirs.push(full);
+                    await read(entry, full + "/");
+                  }
+                } else if (
+                  count < 200 &&
+                  /\.(html?|css|js|mjs|jsx|ts|tsx|json|py|md|txt|java|c|cpp|h|rs|sql|php|go|rb|sh|ya?ml|toml|svg|xml|scss)$/.test(
+                    name,
+                  )
+                ) {
+                  const file = await entry.getFile();
+                  if (file.size < 500000) {
+                    loaded[full] = await file.text();
+                    count++;
+                  }
+                }
+              }
+            }
+            await read(handle);
+            if (!Object.keys(loaded).length) {
+              toast("No supported text files found. Create a file, then save it to the folder.");
+            } else {
+              files = loaded;
+              folders = dirs;
+              tabs = Object.keys(files).slice(0, 5);
+              openFile(tabs[0]);
+              run();
+            }
+            localDirectory = handle;
+            $("#project-name").textContent = handle.name;
+            persist();
+            toast("Local folder connected: " + handle.name);
+            log("Folder connected. Text files auto-save after you edit them.");
+            if ($("#local-folder-toggle")) $("#local-folder-toggle").checked = true;
+          } catch (e) {
+            if (e.name !== "AbortError") {
+              toast("Folder access was denied or unavailable.", "triangle-alert");
+              log(e.message, "error");
+            }
+            if ($("#local-folder-toggle")) $("#local-folder-toggle").checked = !!localDirectory;
+          }
+        }
+        async function writeLocal(name) {
+          if (!localDirectory || files[name] === undefined) return;
+          try {
+            const parts = name.split("/");
+            let dir = localDirectory;
+            for (const p of parts.slice(0, -1))
+              dir = await dir.getDirectoryHandle(p, { create: true });
+            const handle = await dir.getFileHandle(parts.at(-1), { create: true });
+            const writer = await handle.createWritable();
+            await writer.write(files[name]);
+            await writer.close();
+          } catch (e) {
+            log(
+              "Could not save " + name + ": " + e.message + " — Reconnect the folder in Settings.",
+              "error",
+            );
+          }
+        }
+        function downloadBlob(blob, name) {
+          const u = URL.createObjectURL(blob),
+            a = document.createElement("a");
+          a.href = u;
+          a.download = name;
+          document.body.append(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(u), 1000);
+        }
+        function downloadFile() {
+          if (!active) {
+            toast("Open a file first.", "triangle-alert");
+            return;
+          }
+          downloadBlob(
+            new Blob([files[active]], { type: "text/plain;charset=utf-8" }),
+            active.split("/").pop(),
+          );
+          toast("File downloaded");
+        }
+        async function downloadSingle() {
+          toast("Preparing the single-file editor…", "download");
+          try {
+            const r = await fetch(
+              "https://raw.githubusercontent.com/dirextory/b/refs/heads/main/singlefile.html",
+            );
+            if (!r.ok) throw Error("Remote download unavailable");
+            const html = await r.text();
+            if (!/<html[\s>]/i.test(html)) throw Error("Invalid remote HTML");
+            downloadBlob(new Blob([html], { type: "text/html" }), "cobalt.html");
+            toast("Single-file editor downloaded");
+          } catch {
+            const html = standaloneSource;
+            downloadBlob(new Blob([html], { type: "text/html" }), "cobalt.html");
+            toast("Downloaded this editor instead; the remote file is unavailable.");
+          }
+        }
+        function showZip() {
+          const folderSet = new Set(folders);
+          Object.keys(files).forEach((n) => {
+            const p = n.split("/");
+            p.pop();
+            while (p.length) {
+              folderSet.add(p.join("/"));
+              p.pop();
+            }
+          });
+          modal(
+            "Download your workspace",
+            `<p>Pick the files and folders to take with you. Selecting a file selects its parent folder; uncheck a folder to exclude its folder entry without removing individually selected files.</p><div class="check-list" id="zip-list">${[
+              ...folderSet,
+            ]
+              .sort()
+              .map(
+                (n) =>
+                  `<label class="check-row"><input type="checkbox" checked data-zip-folder="${escapeHTML(n)}">${icon("folder", "sm")}${escapeHTML(n)}</label>`,
+              )
+              .join("")}${Object.keys(files)
+              .map(
+                (n) =>
+                  `<label class="check-row ${n.includes("/") ? "nested" : ""}"><input type="checkbox" checked data-zip-file="${escapeHTML(n)}">${fileIcon(n)}${escapeHTML(n)}</label>`,
+              )
+              .join(
+                "",
+              )}</div><div class="modal-footer"><button class="btn" data-action="close-modal">Cancel</button><button class="btn primary" id="export-zip">${icon("download", "sm")} Download ZIP</button></div>`,
+          );
+          $$("[data-zip-file]").forEach(
+            (el) =>
+              (el.onchange = () => {
+                if (el.checked) {
+                  let parent = el.dataset.zipFile.split("/");
+                  parent.pop();
+                  while (parent.length) {
+                    const name = parent.join("/");
+                    const box = $$("[data-zip-folder]").find((b) => b.dataset.zipFolder === name);
+                    if (box) box.checked = true;
+                    parent.pop();
+                  }
+                }
+              }),
+          );
+          $$("[data-zip-folder]").forEach(
+            (el) =>
+              (el.onchange = () => {
+                if (el.checked) {
+                  $$("[data-zip-file]")
+                    .filter((b) => b.dataset.zipFile.startsWith(el.dataset.zipFolder + "/"))
+                    .forEach((b) => (b.checked = true));
+                  $$("[data-zip-folder]")
+                    .filter((b) => b.dataset.zipFolder.startsWith(el.dataset.zipFolder + "/"))
+                    .forEach((b) => (b.checked = true));
+                }
+              }),
+          );
+          $("#export-zip").onclick = async () => {
+            if (!window.JSZip) {
+              toast("ZIP library could not load. Check your connection.", "triangle-alert");
+              return;
+            }
+            const selected = $$("[data-zip-file]:checked"),
+              dirs = $$("[data-zip-folder]:checked");
+            if (!selected.length && !dirs.length) {
+              toast("Choose at least one item.", "triangle-alert");
+              return;
+            }
+            const zip = new JSZip();
+            dirs.forEach((el) => zip.folder(el.dataset.zipFolder));
+            selected.forEach((el) =>
+              zip.file(el.dataset.zipFile, files[el.dataset.zipFile], { createFolders: false }),
+            );
+            downloadBlob(await zip.generateAsync({ type: "blob" }), "cobalt-workspace.zip");
+            closeModal();
+            toast("A little bundle of possibility. Downloaded.");
+          };
+        }
+        async function publish() {
+          const html = previewHTML(false);
+          const encoded = btoa(
+            Array.from(new TextEncoder().encode(html), (b) => String.fromCharCode(b)).join(""),
+          )
+            .replace(/\+/g, "-")
+            .replace(/\//g, "_")
+            .replace(/=+$/, "");
+          const url = new URL(location.href);
+          url.hash = "share=" + encoded;
+          if (url.href.length > 120000) {
+            toast(
+              "This project is too large for a reliable share link. Export a ZIP instead.",
+              "triangle-alert",
+            );
+            return;
+          }
+          modal(
+            "A little creation, ready to share.",
+            `<p>Your page lives inside this URL. No account, no upload, no server. Anyone with the link can open it on this same host.</p><textarea id="share-url" class="publish-link" rows="3" readonly style="background:var(--bg);border:1px solid var(--line);color:var(--muted);border-radius:7px;padding:12px;resize:none">${escapeHTML(url.href)}</textarea><div class="tip-box">This is encoding, not encryption. Don’t include secrets. Very large URLs may not work in every browser or messaging app. Shared pages run in a sandbox.</div><div class="modal-footer"><button class="btn" id="open-share">${icon("external-link", "sm")} Open page</button><button class="btn primary" id="copy-share">${icon("copy", "sm")} Copy link</button></div>`,
+          );
+          $("#copy-share").onclick = () => copyText(url.href, "Share link copied");
+          $("#open-share").onclick = () => window.open(url.href, "_blank", "noopener");
+        }
+        async function copyText(text, message = "Copied") {
+          try {
+            await navigator.clipboard.writeText(text);
+            toast(message);
+          } catch {
+            modal(
+              "Copy your text",
+              `<p>Clipboard access is unavailable here. Select and copy the text below.</p><textarea id="copy-fallback" readonly style="width:100%;height:140px;background:var(--bg);color:var(--text);padding:12px;border:1px solid var(--line);border-radius:6px">${escapeHTML(text)}</textarea>`,
+            );
+            $("#copy-fallback").select();
+          }
+        }
+        function showShared() {
+          if (!location.hash.startsWith("#share=")) return false;
+          try {
+            const raw = location.hash.slice(7).replace(/-/g, "+").replace(/_/g, "/"),
+              html = new TextDecoder().decode(Uint8Array.from(atob(raw), (c) => c.charCodeAt(0)));
+            document.body.innerHTML = "";
+            const f = document.createElement("iframe");
+            f.title = "Shared cobalt+ creation";
+            f.sandbox = "allow-scripts allow-forms allow-modals";
+            f.style.cssText = "border:0;width:100vw;height:100dvh;background:white";
+            f.srcdoc = html;
+            document.body.append(f);
+            return true;
+          } catch {
+            toast("This share link is incomplete or invalid.", "triangle-alert");
+            return false;
+          }
+        }
+        function welcome(step = 0) {
+          onboardStep = step;
+          let body = "";
+          if (step === 0)
+            body = `<div class="brand">cobalt<b>+</b></div><h1>Welcome${profile.name ? ", " + escapeHTML(profile.name) : ""}!</h1><p>A little space for your next big idea.<br>Let’s make it feel like yours.</p><input id="onboard-name" placeholder="your first name…" value="${escapeHTML(profile.name)}" maxlength="35" aria-label="Your first name"><button class="btn primary" id="onboard-next">Continue ${icon("arrow-right", "sm")}</button>`;
+          if (step === 1)
+            body = `<span class="eyebrow">MAKE YOURSELF AT HOME</span><h1>Your space. Your style.</h1><p>Find an atmosphere that feels right.<br>You can change everything in Settings.</p><div class="theme-grid">${Object.entries(
+              themes,
+            )
+              .filter(([n]) => n !== "Custom")
+              .map(
+                ([n, t]) =>
+                  `<button class="theme-swatch ${settings.theme === n ? "selected" : ""}" data-onboard-theme="${n}"><div class="theme-colors" style="background:${t.bg}"><i style="background:${t.panel}"></i><i style="background:${t.accent}"></i></div><small>${n}</small></button>`,
+              )
+              .join(
+                "",
+              )}</div><div style="margin:22px 0;text-align:left"><label class="row" style="font-size:11px"><input type="checkbox" id="onboard-live" ${settings.live ? "checked" : ""}> Keep my preview live as I type</label></div><button class="btn primary" id="onboard-next">Continue ${icon("arrow-right", "sm")}</button>`;
+          if (step === 2)
+            body = `<span class="eyebrow">SMALL EDITOR. BIG POSSIBILITIES.</span><h1>Make something you.</h1><p>Your toolkit, without the clutter.</p><div class="feature-list">${[
+              ["code-xml", "20+ languages"],
+              ["panel-right", "Live preview"],
+              ["book-open", "Language manuals"],
+              ["palette", "Your own themes"],
+              ["scan", "Visual inspector"],
+              ["chart-no-axes-combined", "Local coding stats"],
+              ["archive", "ZIP & HTML exports"],
+              ["upload", "Shareable pages"],
+            ]
+              .map(([i, n]) => `<div>${icon(i, "sm")}${n}</div>`)
+              .join(
+                "",
+              )}</div><button class="btn primary" id="onboard-next">Let’s build something ${icon("arrow-right", "sm")}</button>`;
+          modal(
+            "Make yourself at home",
+            `<div class="onboarding">${body}<div class="step-dots">${[0, 1, 2].map((n) => `<i class="${step === n ? "active" : ""}"></i>`).join("")}</div></div>`,
+          );
+          $("#onboard-next").onclick = () => {
+            if (step === 0) {
+              profile.name = $("#onboard-name").value.trim();
+              $("#avatar").textContent = profile.name.slice(0, 1).toUpperCase() || "Y";
+              persist();
+              welcome(1);
+            } else if (step === 1) {
+              settings.live = $("#onboard-live").checked;
+              persist();
+              welcome(2);
+            } else {
+              profile.complete = true;
+              persist();
+              closeModal();
+              toast("Make yourself at home" + (profile.name ? ", " + profile.name : "."));
+            }
+          };
+          $("#onboard-name")?.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") $("#onboard-next").click();
+          });
+        }
+        function checkWatermark() {
+          if (stored("cobalt.ignoreWatermark", false) || $("#overlay-root").children.length) return;
+          const affected = Object.keys(files).filter((n) =>
+            files[n].toLowerCase().includes("htmlhost.ai"),
+          );
+          if (!affected.length || affected.map((n) => files[n]).join("") === ignoredWatermark)
+            return;
+          modal(
+            "Remove detected htmlhost.ai watermark?",
+            `<p>The text was found in ${affected.map((n) => "<code>" + escapeHTML(n) + "</code>").join(", ")}. Remove every line containing it? Review first if a matching line contains other code.</p><label class="row" style="font-size:11px;margin-top:18px"><input type="checkbox" id="watermark-ignore"> Don’t ask again</label><div class="modal-footer"><button class="btn" id="watermark-no">No, keep it</button><button class="btn primary" id="watermark-yes">Yes, remove lines</button></div>`,
+          );
+          function done(remove) {
+            if ($("#watermark-ignore").checked)
+              localStorage.setItem("cobalt.ignoreWatermark", "true");
+            if (remove) {
+              affected.forEach(
+                (n) =>
+                  (files[n] = files[n]
+                    .split("\n")
+                    .filter((l) => !l.toLowerCase().includes("htmlhost.ai"))
+                    .join("\n")),
+              );
+              if (active) editor.value = files[active];
+              highlight();
+              persist();
+              run();
+              toast("Matching lines removed");
+            } else {
+              ignoredWatermark = affected.map((n) => files[n]).join("");
+            }
+            closeModal();
+          }
+          $("#watermark-no").onclick = () => done(false);
+          $("#watermark-yes").onclick = () => done(true);
+        }
+        let ignoredWatermark = "";
+        function toggleInspect() {
+          inspectMode = !inspectMode;
+          selectedElement = null;
+          if (inspectMode) {
+            section = "inspect";
+            showSidebar();
+            if (matchMedia("(max-width:540px)").matches)
+              $("#sidebar").classList.remove("mobile-open");
+            $("#sidebar-title").textContent = "Inspect";
+            $("#sidebar-bottom").classList.add("hidden");
+            renderInspector();
+            toast("Click any element in the preview to edit its properties.", "mouse-pointer-2");
+            $("#preview-panel").classList.add("mobile-open");
+            setVisibility("#preview-panel", true);
+          } else {
+            section = "explorer";
+            renderExplorer();
+            $("#preview-state").textContent = "You're looking at your live creation.";
+          }
+          $$("[data-section]").forEach((b) =>
+            b.classList.toggle("active", b.dataset.section === section),
+          );
+          run();
+        }
+        function renderInspector() {
+          if (!inspectMode) return;
+          $("#sidebar-title").textContent = "Inspect";
+          $("#sidebar-bottom").classList.add("hidden");
+          $("#preview-state").textContent = "Inspect mode · click an element to edit";
+          $("#explorer").innerHTML = selectedElement
+            ? `<div class="inspector-intro">Changes are written back to your HTML. Use custom CSS below to change any other visual property.</div><div class="inspect-tag">&lt;${escapeHTML(selectedElement.tag)}&gt;</div><form id="inspect-form"><div class="inspect-fields">${[["text", "Text content"], ...(selectedElement.tag === "img" ? [["src", "Image URL"]] : []), ["color", "Text color"], ["background", "Background"], ["fontSize", "Font size"], ["borderRadius", "Corner radius"]].map(([key, title]) => `<label>${title}<input name="${key}" value="${escapeHTML(selectedElement[key] || "")}" ${key === "text" && selectedElement.text === "" ? 'placeholder="Leaf elements only"' : ""}></label>`).join("")}<label>Custom CSS property<input name="customProperty" placeholder="e.g. padding, width, font-weight" /></label><label>CSS value<input name="customValue" placeholder="e.g. 24px, 100%, 600" /></label><label>HTML attribute<input name="attributeName" placeholder="e.g. href, alt, class, id" /></label><label>Attribute value<input name="attributeValue" placeholder="A new value…" /></label><button class="btn primary" style="margin-top:18px;width:100%;font-size:10px">Apply to code</button><button type="button" data-action="inspect" class="btn" style="width:100%;margin-top:8px;font-size:10px">Exit inspect mode</button></div></form>`
+            : `<div class="inspector-intro">${icon("mouse-pointer-2", "lg")}<h3 style="font-weight:500;color:#ccc">See it. Change it.</h3>Click text, an image, or any element in the preview. Edit its appearance here and we’ll update your HTML.<br><br><span style="font-size:9px">Static HTML elements are supported. Elements created only by JavaScript need to be edited in code.</span><button class="btn" data-action="inspect" style="width:100%;margin-top:20px">Exit inspect mode</button></div>`;
+          if ($("#inspect-form"))
+            $("#inspect-form").onsubmit = (e) => {
+              e.preventDefault();
+              const n = language(active) === "markup" ? active : "index.html";
+              if (files[n] === undefined) {
+                toast("Open an HTML file first.", "triangle-alert");
+                return;
+              }
+              const doc = new DOMParser().parseFromString(files[n], "text/html"),
+                el = doc.querySelector(selectedElement.selector);
+              if (!el) {
+                toast(
+                  "This element was created by JavaScript. Edit its source code instead.",
+                  "triangle-alert",
+                );
+                return;
+              }
+              const values = Object.fromEntries(new FormData(e.target));
+              if (!el.children.length) el.textContent = values.text;
+              if (el.tagName === "IMG") el.setAttribute("src", values.src);
+              ["color", "background", "fontSize", "borderRadius"].forEach((k) => {
+                if (values[k]) el.style[k] = values[k];
+              });
+              if (values.customProperty.trim())
+                el.style.setProperty(values.customProperty.trim(), values.customValue.trim());
+              if (/^[a-zA-Z_:][\w:.-]*$/.test(values.attributeName.trim()))
+                el.setAttribute(values.attributeName.trim(), values.attributeValue);
+              files[n] = "<!DOCTYPE html>\n" + doc.documentElement.outerHTML;
+              if (active === n) {
+                editor.value = files[n];
+                highlight();
+              }
+              persist();
+              run();
+              toast("A little visual edit, written to your code.");
+            };
+        }
+        let snakeTimer = null,
+          snake = [],
+          snakeDir = { x: 1, y: 0 },
+          snakeNext = { x: 1, y: 0 },
+          food,
+          score = 0,
+          snakeOver = false;
+        function startSnake() {
+          modal(
+            "A little break.",
+            `<p>Arrow keys to move. Eat, grow, try not to meet yourself.</p><div class="row"><span class="muted">Score <b id="snake-score" style="color:var(--accent)">0</b></span><span class="spacer"></span><button class="btn" id="snake-restart">Start again</button></div><canvas class="game" id="snake-canvas" width="360" height="300" aria-label="Snake game"></canvas><p id="snake-state" style="text-align:center;font-size:10px">A small detour. Your code will be right here.</p>`,
+          );
+          function init() {
+            if (snakeTimer) clearInterval(snakeTimer);
+            snake = [
+              { x: 8, y: 7 },
+              { x: 7, y: 7 },
+              { x: 6, y: 7 },
+            ];
+            snakeDir = { x: 1, y: 0 };
+            snakeNext = { x: 1, y: 0 };
+            score = 0;
+            snakeOver = false;
+            food = { x: 13, y: 7 };
+            $("#snake-score").textContent = "0";
+            $("#snake-state").textContent = "A small detour. Your code will be right here.";
+            drawSnake();
+            snakeTimer = setInterval(tick, 130);
+          }
+          $("#snake-restart").onclick = init;
+          init();
+        }
+        function drawSnake() {
+          const c = $("#snake-canvas");
+          if (!c) return;
+          const ctx = c.getContext("2d");
+          ctx.fillStyle = "#151619";
+          ctx.fillRect(0, 0, 360, 300);
+          ctx.fillStyle = "#d9b898";
+          ctx.beginPath();
+          ctx.arc(food.x * 20 + 10, food.y * 20 + 10, 5, 0, Math.PI * 2);
+          ctx.fill();
+          snake.forEach((p, i) => {
+            ctx.fillStyle = i === 0 ? "#ded7f4" : "#a59ab9";
+            ctx.fillRect(p.x * 20 + 2, p.y * 20 + 2, 16, 16);
+          });
+        }
+        function tick() {
+          if (!$("#snake-canvas")) {
+            clearInterval(snakeTimer);
+            snakeTimer = null;
+            return;
+          }
+          snakeDir = { ...snakeNext };
+          const h = { x: snake[0].x + snakeDir.x, y: snake[0].y + snakeDir.y },
+            eat = h.x === food.x && h.y === food.y;
+          if (
+            h.x < 0 ||
+            h.x >= 18 ||
+            h.y < 0 ||
+            h.y >= 15 ||
+            snake.slice(0, eat ? undefined : -1).some((p) => p.x === h.x && p.y === h.y)
+          ) {
+            clearInterval(snakeTimer);
+            snakeOver = true;
+            $("#snake-state").textContent = "A beautiful attempt. Start again?";
+            return;
+          }
+          snake.unshift(h);
+          if (eat) {
+            score++;
+            $("#snake-score").textContent = score;
+            if (snake.length === 270) {
+              clearInterval(snakeTimer);
+              $("#snake-state").textContent = "You filled the whole canvas. Nicely done.";
+              return;
+            }
+            do {
+              food = { x: Math.floor(Math.random() * 18), y: Math.floor(Math.random() * 15) };
+            } while (snake.some((p) => p.x === food.x && p.y === food.y));
+          } else snake.pop();
+          drawSnake();
+        }
+        function formatCode() {
+          if (!active || special) return;
+          const lang = language(active);
+          try {
+            if (lang === "json") editor.value = JSON.stringify(JSON.parse(editor.value), null, 2);
+            else {
+              let depth = 0;
+              editor.value = editor.value
+                .split("\n")
+                .map((l) => {
+                  const t = l.trim();
+                  if (!t) return "";
+                  if (/^(<\/|[}\]])/.test(t)) depth = Math.max(0, depth - 1);
+                  const out = "  ".repeat(depth) + t;
+                  if (lang === "markup") {
+                    if (
+                      /^<([a-z][\w-]*)(?:\s[^>]*)?>$/i.test(t) &&
+                      !/^<(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)\b/i.test(
+                        t,
+                      )
+                    )
+                      depth++;
+                  } else if (/[{\[]\s*$/.test(t)) depth++;
+                  return out;
+                })
+                .join("\n");
+            }
+            editor.dispatchEvent(new Event("input"));
+            toast("Code tidied up.");
+          } catch (e) {
+            toast("Could not format: " + e.message, "triangle-alert");
+          }
+        }
+        const actions = {
+          "new-file": () => newItem(),
+          "new-folder": () => newItem(true),
+          search: showSearch,
+          settings: () => showSettings(),
+          "close-modal": closeModal,
+          run: () => {
+            setVisibility("#preview-panel", true);
+            $("#preview-panel").classList.add("mobile-open");
+            run(true);
+          },
+          refresh: () => run(true),
+          reset: () =>
+            confirmAction(
+              "A fresh start?",
+              "Replace this workspace with the three starter files? Download a ZIP first if you want to keep your work.",
+              () => {
+                files = { ...starter };
+                folders = ["assets"];
+                tabs = Object.keys(files);
+                openFile("index.html");
+                run();
+                toast("A blank canvas, all over again.");
+              },
+            ),
+          "toggle-sidebar": () => {
+            if (matchMedia("(max-width:540px)").matches) {
+              $("#sidebar").classList.remove("hidden");
+              $("#sidebar").classList.toggle("mobile-open");
+              return;
+            }
+            setVisibility("#sidebar");
+            $("#sidebar-resizer").classList.toggle(
+              "hidden",
+              $("#sidebar").classList.contains("hidden"),
+            );
+          },
+          "toggle-editor": () => {
+            setVisibility("#code-panel");
+            if ($("#code-panel").classList.contains("hidden"))
+              setVisibility("#preview-panel", true);
+          },
+          "toggle-preview": () => {
+            if (matchMedia("(max-width:780px)").matches) {
+              $("#preview-panel").classList.toggle("mobile-open");
+              $("#preview-panel").classList.remove("hidden");
+            } else setVisibility("#preview-panel");
+            if ($("#preview-panel").classList.contains("hidden"))
+              setVisibility("#code-panel", true);
+          },
+          "toggle-terminal": () => setVisibility("#terminal"),
+          "clear-console": () => {
+            logs = [];
+            renderConsole();
+          },
+          manual: () => selectSection("manual"),
+          stats: () => selectSection("stats"),
+          templates: () => selectSection("templates"),
+          inspect: toggleInspect,
+          fullscreen: () => {
+            $("#preview-panel").classList.toggle("fullscreen-preview");
+            setVisibility("#preview-panel", true);
+            updateDimensions();
+          },
+          "new-tab": () => {
+            const win = window.open("about:blank", "_blank");
+            if (!win) {
+              toast("Allow pop-ups to open your preview.", "triangle-alert");
+              return;
+            }
+            win.opener = null;
+            win.document.title = "cobalt+ preview";
+            const el = win.document.createElement("iframe");
+            el.sandbox = "allow-scripts allow-forms allow-modals";
+            el.style.cssText =
+              "position:fixed;inset:0;width:100%;height:100%;border:0;background:white";
+            el.srcdoc = previewHTML(false);
+            win.document.body.style.margin = "0";
+            win.document.body.append(el);
+          },
+          "auto-run": () => {
+            settings.live = !settings.live;
+            persist();
+            toast("Live preview " + (settings.live ? "enabled" : "paused"));
+            if (settings.live) run();
+          },
+          undo: () => {
+            editor.focus();
+            document.execCommand("undo");
+          },
+          redo: () => {
+            editor.focus();
+            document.execCommand("redo");
+          },
+          "select-all": () => {
+            editor.focus();
+            editor.select();
+          },
+          "copy-code": () => active && copyText(files[active], "Code copied"),
+          format: formatCode,
+          download: downloadFile,
+          zip: showZip,
+          singlefile: downloadSingle,
+          publish: publish,
+          "local-folder": chooseLocalFolder,
+          "save-local": async () => {
+            if (!localDirectory) {
+              await chooseLocalFolder();
+              return;
+            }
+            for (const n of Object.keys(files)) await writeLocal(n);
+            toast("Workspace saved to your folder");
+          },
+          welcome: () => welcome(0),
+          snake: startSnake,
+          "reset-watermark": () => {
+            localStorage.removeItem("cobalt.ignoreWatermark");
+            ignoredWatermark = "";
+            toast("Watermark prompts re-enabled");
+          },
+          "starter-template": () => {
+            let n = "untitled.html",
+              i = 1;
+            while (files[n] !== undefined) n = `untitled-${i++}.html`;
+            files[n] =
+              '<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1" />\n  <title>A new beginning</title>\n</head>\n<body>\n  <p>A little idea, brought to life.</p>\n</body>\n</html>';
+            openFile(n);
+            run();
+            toast("A fresh start added to your workspace");
+          },
+          "profile-template": () => {
+            let n = "profile.html",
+              i = 1;
+            while (files[n] !== undefined) n = `profile-${i++}.html`;
+            files[n] =
+              `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8" />\n  <meta name="viewport" content="width=device-width, initial-scale=1" />\n  <title>A little about me</title>\n  <style>\n    body { font: 16px/1.7 system-ui; background: #f6f5f1; color: #333; max-width: 600px; margin: 12vh auto; padding: 30px; }\n    h1 { font-size: 52px; letter-spacing: -3px; font-weight: 500; }\n    p { color: #777; }\n    a { color: #76618c; }\n  </style>\n</head>\n<body>\n  <p>A LITTLE INTRODUCTION</p>\n  <h1>Hi, I'm ${escapeHTML(profile.name || "a maker")}.</h1>\n  <p>Curious by nature. Building things, one little idea at a time.</p>\n  <a href="mailto:hello@example.com">Say hello →</a>\n</body>\n</html>`;
+            openFile(n);
+            run();
+            toast("Your personal page is ready");
+          },
+          help: () =>
+            modal(
+              "A few little shortcuts",
+              `<table class="manual-table"><tbody>${[
+                ["⌘ / Ctrl + K", "Search files, code and commands"],
+                ["⌘ / Ctrl + Enter", "Run your preview"],
+                ["⌘ / Ctrl + S", "Save locally"],
+                ["⌘ / Ctrl + N", "New file"],
+                ["⌘ / Ctrl + ,", "Open settings"],
+                ["Tab", "Insert two spaces"],
+                ["⇧ ⌥ F", "Format code"],
+                ["Escape", "Close menus, dialogs, fullscreen"],
+              ]
+                .map(([k, v]) => `<tr><td><code>${k}</code></td><td>${v}</td></tr>`)
+                .join(
+                  "",
+                )}</tbody></table><p>Your code and settings stay in this browser. Download a ZIP to back up your workspace.</p>`,
+            ),
+        };
+        document.addEventListener("click", (e) => {
+          const closeTabButton = e.target.closest("[data-close-tab]");
+          if (closeTabButton) {
+            closeTab(closeTabButton.dataset.closeTab);
+            return;
+          }
+          if (e.target.closest("[data-close-special]")) {
+            closeDocument();
+            return;
+          }
+          const menu = e.target.closest("[data-menu]");
+          if (menu) {
+            const was = menu.classList.contains("open");
+            closeDropdown();
+            if (!was) {
+              const r = menu.getBoundingClientRect();
+              dropdown(menuItems[menu.dataset.menu], r.left, r.bottom + 5);
+              menu.classList.add("open");
+            }
+            return;
+          }
+          const action = e.target.closest("[data-action]");
+          if (action) {
+            const a = action.dataset.action,
+              ctx = $("#dropdown-root").dataset.context,
+              folder = $("#dropdown-root").dataset.folder === "1";
+            closeDropdown();
+            if (a === "context-new-file" || a === "context-new-folder") {
+              newItem(
+                a === "context-new-folder",
+                folder ? ctx : ctx?.includes("/") ? ctx.slice(0, ctx.lastIndexOf("/")) : "",
+              );
+              return;
+            }
+            if (a === "context-rename") {
+              renameItem(ctx, folder);
+              return;
+            }
+            if (a === "context-delete") {
+              deleteItem(ctx, folder);
+              return;
+            }
+            actions[a]?.();
+            return;
+          }
+          const file = e.target.closest("[data-file]");
+          if (file) {
+            openFile(file.dataset.file);
+            return;
+          }
+          const f = e.target.closest("[data-folder]");
+          if (f) {
+            closedFolders.has(f.dataset.folder)
+              ? closedFolders.delete(f.dataset.folder)
+              : closedFolders.add(f.dataset.folder);
+            renderExplorer();
+            return;
+          }
+          const sec = e.target.closest("[data-section]");
+          if (sec) {
+            selectSection(sec.dataset.section);
+            return;
+          }
+          const theme = e.target.closest("[data-theme]");
+          if (theme) {
+            settings.theme = theme.dataset.theme;
+            applySettings();
+            showSettings();
+            return;
+          }
+          const wt = e.target.closest("[data-wallpaper]");
+          if (wt) {
+            settings.wallpaper = Number(wt.dataset.wallpaper);
+            applySettings();
+            $$("[data-wallpaper]").forEach((b) => b.classList.toggle("selected", b === wt));
+            return;
+          }
+          const st = e.target.closest("[data-settings-tab]");
+          if (st) {
+            showSettings(st.dataset.settingsTab);
+            return;
+          }
+          const ot = e.target.closest("[data-onboard-theme]");
+          if (ot) {
+            settings.theme = ot.dataset.onboardTheme;
+            applySettings();
+            $$("[data-onboard-theme]").forEach((b) => b.classList.toggle("selected", b === ot));
+            return;
+          }
+          const m = e.target.closest("[data-model]");
+          if (m) {
+            model = m.dataset.model;
+            closeDropdown();
+            renderAI();
+            return;
+          }
+          const sf = e.target.closest("[data-search-file]");
+          if (sf) {
+            closeModal();
+            openFile(sf.dataset.searchFile);
+            return;
+          }
+          const sa = e.target.closest("[data-search-action]");
+          if (sa) {
+            closeModal();
+            actions[sa.dataset.searchAction]?.();
+            return;
+          }
+          const t = e.target.closest("[data-remote-template]");
+          if (t) {
+            useRemoteTemplate(t.dataset.remoteTemplate);
+            return;
+          }
+          const device = e.target.closest("[data-device]");
+          if (device) {
+            frame.classList.toggle("mobile", device.dataset.device === "mobile");
+            $$("[data-device]").forEach((b) => b.classList.toggle("active", b === device));
+            setTimeout(updateDimensions, 350);
+            return;
+          }
+          if (e.target.classList.contains("modal-backdrop")) closeModal();
+          if (!e.target.closest(".dropdown,#model-selector")) closeDropdown();
+        });
+        document.addEventListener("change", (e) => {
+          const el = e.target;
+          if (el.dataset.setting) {
+            const key = el.dataset.setting;
+            settings[key] =
+              el.type === "checkbox"
+                ? el.checked
+                : el.type === "range"
+                  ? Number(el.value)
+                  : el.value;
+            if (key === "accent" || key === "editor") settings.theme = "Custom";
+            applySettings();
+            if ($("#font-size-value")) $("#font-size-value").textContent = settings.fontSize + "px";
+            if (key === "live" && settings.live) run();
+          }
+          if (el.id === "local-folder-toggle") {
+            if (el.checked) chooseLocalFolder();
+            else {
+              localDirectory = null;
+              toast("Local folder disconnected");
+            }
+          }
+          if (el.id === "profile-name") {
+            profile.name = el.value.trim();
+            $("#avatar").textContent = profile.name.slice(0, 1).toUpperCase() || "Y";
+            persist();
+          }
+        });
+        document.addEventListener("keydown", (e) => {
+          if ($("#snake-canvas") && e.key.startsWith("Arrow")) {
+            e.preventDefault();
+            const dirs = {
+                ArrowUp: { x: 0, y: -1 },
+                ArrowDown: { x: 0, y: 1 },
+                ArrowLeft: { x: -1, y: 0 },
+                ArrowRight: { x: 1, y: 0 },
+              },
+              d = dirs[e.key];
+            if (d.x !== -snakeDir.x || d.y !== -snakeDir.y) snakeNext = d;
+            return;
+          }
+          if (e.key === "Escape") {
+            closeDropdown();
+            closeModal();
+            $("#preview-panel").classList.remove("fullscreen-preview");
+            if (inspectMode) {
+              inspectMode = false;
+              section = "explorer";
+              renderExplorer();
+              run();
+            }
+            return;
+          }
+          const command = e.metaKey || e.ctrlKey;
+          if (command && ["k", "s", "n", ","].includes(e.key.toLowerCase())) {
+            e.preventDefault();
+            actions[
+              { k: "search", s: "save-local", n: "new-file", ",": "settings" }[e.key.toLowerCase()]
+            ]();
+          }
+          if (command && e.key === "Enter") {
+            e.preventDefault();
+            actions.run();
+          }
+          if (e.shiftKey && e.altKey && e.key.toLowerCase() === "f") {
+            e.preventDefault();
+            formatCode();
+          }
+          if (e.key === "Enter" && e.target.dataset.closeTab) {
+            e.preventDefault();
+            closeTab(e.target.dataset.closeTab);
+          }
+          if (e.key === "Tab" && $("#overlay-root .modal")) {
+            const focusable = $$(
+              "button:not(:disabled),input:not(:disabled),textarea:not(:disabled),select:not(:disabled),a[href]",
+              $("#overlay-root"),
+            ).filter((el) => el.offsetParent !== null);
+            const first = focusable[0],
+              last = focusable.at(-1);
+            if (e.shiftKey && document.activeElement === first) {
+              e.preventDefault();
+              last?.focus();
+            } else if (!e.shiftKey && document.activeElement === last) {
+              e.preventDefault();
+              first?.focus();
+            }
+          }
+        });
+        $("#console-form").onsubmit = (e) => {
+          e.preventDefault();
+          const input = $("#console-command"),
+            cmd = input.value.trim();
+          input.value = "";
+          if (!cmd) return;
+          log("› " + cmd);
+          if (cmd === "help")
+            log(
+              "Commands: help, clear, run, files, stats. JavaScript errors from your preview appear here with troubleshooting hints. This is a beta diagnostic console, not a system shell.",
+            );
+          else if (cmd === "clear") actions["clear-console"]();
+          else if (cmd === "run") run(true);
+          else if (cmd === "files") log(Object.keys(files).join("\n"));
+          else if (cmd === "stats")
+            log(`${stats.edits} edits · ${stats.keystrokes} characters · ${stats.runs} runs`);
+          else log(`Unknown command "${cmd}". Type help to see available commands.`, "warn");
+        };
+        function makeResizable(handle, move) {
+          $(handle).addEventListener("pointerdown", (e) => {
+            e.preventDefault();
+            const el = e.currentTarget;
+            el.setPointerCapture(e.pointerId);
+            document.body.style.cursor =
+              handle === "#terminal-resizer" ? "row-resize" : "col-resize";
+            frame.style.pointerEvents = "none";
+            const onMove = (ev) => {
+              move(ev);
+              updateDimensions();
+            };
+            const up = () => {
+              el.removeEventListener("pointermove", onMove);
+              el.removeEventListener("pointerup", up);
+              el.removeEventListener("pointercancel", up);
+              document.body.style.cursor = "";
+              frame.style.pointerEvents = "";
+              highlight();
+            };
+            el.addEventListener("pointermove", onMove);
+            el.addEventListener("pointerup", up);
+            el.addEventListener("pointercancel", up);
+          });
+        }
+        makeResizable("#sidebar-resizer", (e) =>
+          document.documentElement.style.setProperty(
+            "--sidebar-width",
+            Math.min(380, Math.max(155, e.clientX - 60)) + "px",
+          ),
+        );
+        makeResizable("#editor-resizer", (e) => {
+          const r = $(".main-panels").getBoundingClientRect();
+          document.documentElement.style.setProperty(
+            "--editor-width",
+            Math.min(75, Math.max(30, ((e.clientX - r.left) / r.width) * 100)) + "%",
+          );
+        });
+        makeResizable("#terminal-resizer", (e) =>
+          document.documentElement.style.setProperty(
+            "--terminal-height",
+            Math.min(
+              $("#code-panel").clientHeight * 0.6,
+              Math.max(95, $("#code-panel").getBoundingClientRect().bottom - e.clientY),
+            ) + "px",
+          ),
+        );
+        new ResizeObserver(updateDimensions).observe($("#preview-stage"));
+        window.addEventListener("resize", () => {
+          highlight();
+          renderExplorer();
+        });
+        setInterval(() => {
+          if (document.visibilityState === "visible") {
+            stats.seconds += 10;
+            if (special === "stats") renderStats();
+            persist();
+          }
+        }, 10000);
+        if (window.Prism?.plugins?.autoloader)
+          Prism.plugins.autoloader.languages_path =
+            "https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/";
+        $("#avatar").textContent = profile.name.slice(0, 1).toUpperCase() || "Y";
+        applySettings();
+        openFile(active);
+        renderExplorer();
+        log("Welcome to cobalt+. Make something that feels like you.");
+        log("Workspace ready. Live preview is listening.");
+        run();
+        // Capture a pristine, standalone document rather than the generated workspace DOM.
+        fetch(location.pathname)
+          .then((r) => (r.ok ? r.text() : Promise.reject()))
+          .then((html) => {
+            if (html.includes("cobalt+ — a little space to build"))
+              standaloneSource = cleanSource(html);
+          })
+          .catch(() => {});
+        setTimeout(() => {
+          if (Object.values(files).join("") !== ignoredWatermark) checkWatermark();
+        }, 1800);
+      })();
+    </script>
+  </body>
+</html>
