@@ -1,1 +1,18 @@
-
+[
+  {
+    "name": "gn-math",
+    "description": "A website containing a load of games (500+)."
+  },
+  {
+    "name": "link hub",
+    "description": "a simple link hub that you can build off of."
+  },
+  {
+    "name": "portfolio",
+    "description": "a simple portfolio starter. (nobody needs this)"
+  },
+  {
+    "name": "hello world",
+    "description": "A simple starter page."
+  }
+]
