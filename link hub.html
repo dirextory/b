@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#f7f6f3" />
+    <title>Link hub</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f6f3;
+        --text: #292a29;
+        --muted: #777873;
+        --line: #e4e2de;
+        --accent: #386b55;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root { --bg: #191a19; --text: #f1f1ee; --muted: #b4b5af; --line: #393a38; --accent: #a5d0b7; }
+      }
+      * { box-sizing: border-box; }
+      body { max-width: 720px; margin: 0 auto; padding: 72px 24px; background: var(--bg); color: var(--text); font-size: 17px; line-height: 1.6; }
+      h1 { margin: 0 0 28px; font-size: clamp(36px, 7vw, 52px); line-height: 1.1; letter-spacing: -.045em; }
+      ul { margin: 0; padding: 0; list-style: none; }
+      li { border-top: 1px solid var(--line); }
+      li:last-child { border-bottom: 1px solid var(--line); }
+      a { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 58px; padding: 12px 2px; color: var(--text); text-decoration: none; }
+      a:hover { color: var(--accent); }
+      a:focus-visible { outline: 3px solid #2783de; outline-offset: 3px; border-radius: 3px; }
+      .arrow { width: 16px; height: 16px; flex: 0 0 auto; color: var(--muted); }
+      #preview-dialog { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 0; overflow: hidden; border: 0; background: var(--bg); }
+      #preview-dialog::backdrop { background: var(--bg); }
+      #preview { position: absolute; inset: 0; display: block; width: 100%; height: 100%; border: 0; background: white; }
+      #preview-close { position: absolute; z-index: 2; top: 16px; right: 16px; display: grid; place-items: center; width: 48px; height: 48px; padding: 0; border: 1px solid rgba(0, 0, 0, .18); border-radius: 12px; background: rgba(255, 255, 255, .96); color: #222; cursor: pointer; }
+      #preview-close svg { width: 20px; height: 20px; }
+      #preview-close:focus-visible { outline: 3px solid #2783de; outline-offset: 3px; }
+      @media (max-width: 520px) { body { padding: 48px 20px; } }
+      @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Link hub</h1>
+      <ul>
+        <!-- Add, remove, or rename links here. data-open can be: tab, blank, or iframe. -->
+        <li><a href="https://github.com" data-open="tab" target="_blank" rel="noopener noreferrer">GitHub <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <li><a href="https://developer.mozilla.org" data-open="tab" target="_blank" rel="noopener noreferrer">MDN Web Docs <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <li><a href="https://www.figma.com" data-open="blank" target="_blank" rel="noopener noreferrer">Figma <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+        <li><a href="https://example.com" data-open="iframe" target="_blank" rel="noopener noreferrer">Example site <svg class="arrow lucide lucide-arrow-up-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 7h10v10"></path><path d="M7 17 17 7"></path></svg></a></li>
+      </ul>
+      <dialog id="preview-dialog" aria-label="Link preview">
+        <button id="preview-close" type="button" aria-label="Close preview" autofocus><svg class="lucide lucide-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"></path><path d="m6 6 12 12"></path></svg></button>
+        <iframe id="preview" title="Link preview" sandbox="allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>
+      </dialog>
+    </main>
+    <script>
+      const preview = document.querySelector("#preview");
+      const previewDialog = document.querySelector("#preview-dialog");
+      function closePreview() {
+        preview.src = "about:blank";
+        previewDialog.close();
+      }
+      document.querySelector("#preview-close").addEventListener("click", closePreview);
+      previewDialog.addEventListener("close", () => { preview.src = "about:blank"; });
+      document.addEventListener("click", (event) => {
+        const link = event.target.closest("a[data-open]");
+        if (!link) return;
+        if (link.dataset.open === "blank") {
+          event.preventDefault();
+          const tab = window.open("about:blank", "_blank");
+          if (tab) {
+            tab.opener = null;
+            tab.location.replace(link.href);
+          } else {
+            window.open(link.href, "_blank", "noopener,noreferrer");
+          }
+        } else if (link.dataset.open === "iframe") {
+          event.preventDefault();
+          preview.src = link.href;
+          previewDialog.showModal();
+        }
+      });
+    </script>
+  </body>
+</html>
